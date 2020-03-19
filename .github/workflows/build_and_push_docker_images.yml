@@ -3,7 +3,6 @@ name: Build and push docker images
 on:
   push:
     branches:
-      - master
       - hdl-dev
 
 jobs:
@@ -19,7 +18,7 @@ jobs:
           TAG: ${{ github.ref }}
         shell: bash
         run: |
-          docker build -t hdwlab/webviz:${TAG##*/} .
+          docker build -t hdwlab/webviz:${TAG##*/} -f Dockerfile_app .
 
       - name: Push to DockerHub
         env:
