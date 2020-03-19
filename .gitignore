@@ -71,3 +71,6 @@ lib/
 
 # reg-suit generated files
 .reg/
+
+# .idea
+.idea/
