@@ -3,6 +3,7 @@ name: Build and push docker images
 on:
   push:
     branches:
+      - hdl-master
       - hdl-dev
 
 jobs:
