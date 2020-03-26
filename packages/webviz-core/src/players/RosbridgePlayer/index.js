@@ -18,20 +18,21 @@ import {
   messageDetailsToRosDatatypes,
   sanitizeMessage,
 } from "webviz-core/src/players/RosbridgePlayer/utils";
-import type {
-  AdvertisePayload,
-  Message,
-  Player,
-  PlayerState,
-  PublishPayload,
-  SubscribePayload,
-  Topic,
+import {
+  PlayerCapabilities,
+  type AdvertisePayload,
+  type Message,
+  type Player,
+  type PlayerState,
+  type PublishPayload,
+  type SubscribePayload,
+  type Topic,
 } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import reportError from "webviz-core/src/util/reportError";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
-import { fromMillis } from "webviz-core/src/util/time";
+import { fromMillis, toSec } from "webviz-core/src/util/time";
 
 import "roslib/build/roslib";
 
@@ -50,15 +51,20 @@ export default class RosbridgePlayer implements Player {
   _providerTopics: ?(Topic[]); // Topics as published by the WebSocket.
   _validProviderTopics: ?(Topic[]); // Same topics as above, but only the ones that have valid datatypes.
   _providerDatatypes: ?RosDatatypes; // Datatypes as published by the WebSocket.
-  _start: ?Time; // The time at which we started playing.
   _topicSubscriptions: { [topicName: string]: ROSLIB.Topic } = {}; // Active subscriptions.
   _requestedSubscriptions: SubscribePayload[] = []; // Requested subscriptions by setSubscriptions()
   _messages: Message[] = []; // Queue of messages that we'll send in next _emitState() call.
   _requestTopicsTimeout: ?TimeoutID; // setTimeout() handle for _requestTopics().
+  _isPlaying: boolean = false;
+  _isServiceBusy: boolean = true;
+  _currentTime: Time = fromMillis(Date.now());
+  _startTime: Time = fromMillis(Date.now());
+  _endTime: Time = fromMillis(Date.now());
+  _lastSeekTime: Time = 1;
+  _playbackSpeed: number = 1.0;
 
   constructor(url: string) {
     this._url = url;
-    this._start = fromMillis(Date.now());
     this._open();
   }
 
@@ -108,6 +114,40 @@ export default class RosbridgePlayer implements Player {
 
       // Try connecting again.
       setTimeout(this._open, 1000);
+    });
+  };
+
+  _callService = (
+    serviceName: string,
+    serviceType: string,
+    request: ROSLIB.ServiceRequest,
+    onSuccess?: {},
+    onFail?: {}
+  ) => {
+    const rosClient = this._rosClient;
+    if (!rosClient || this._closed) {
+      return;
+    }
+    this._isServiceBusy = true;
+    const targetService = new ROSLIB.Service({
+      ros: rosClient,
+      name: serviceName,
+      serviceType,
+    });
+    rosClient.getServices((services) => {
+      if (services.indexOf(serviceName) !== -1) {
+        targetService.callService(request, (result) => {
+          if (result.success) {
+            onSuccess();
+          } else {
+            this._isServiceBusy = false;
+            onFail();
+          }
+        });
+      } else {
+        this._isServiceBusy = false;
+        onFail();
+      }
     });
   };
 
@@ -175,14 +215,14 @@ export default class RosbridgePlayer implements Player {
       return Promise.resolve();
     }
 
-    const { _validProviderTopics, _providerDatatypes, _start } = this;
-    if (!_validProviderTopics || !_providerDatatypes || !_start) {
+    const { _validProviderTopics, _providerDatatypes } = this;
+    if (!_validProviderTopics || !_providerDatatypes) {
       return this._listener({
         isPresent: true,
         showSpinner: true,
         showInitializing: !!this._rosClient,
         progress: {},
-        capabilities: [],
+        capabilities: [PlayerCapabilities.setSpeed],
         playerId: this._id,
         activeData: undefined,
       });
@@ -191,7 +231,20 @@ export default class RosbridgePlayer implements Player {
     // Time is always moving forward even if we don't get messages from the server.
     setTimeout(this._emitState, 100);
 
-    const currentTime = fromMillis(Date.now());
+    for (const msg of this._messages) {
+      if (msg.topic === "/clock") {
+        this._currentTime = msg.message.clock;
+        this._isServiceBusy = false;
+      }
+      if (msg.topic === "/rosbag_player_controller/rosbag_start_time") {
+        this._startTime = msg.message.clock;
+        this._isServiceBusy = false;
+      }
+      if (msg.topic === "/rosbag_player_controller/rosbag_end_time") {
+        this._endTime = msg.message.clock;
+        this._isServiceBusy = false;
+      }
+    }
     const messages = this._messages;
     this._messages = [];
     return this._listener({
@@ -199,19 +252,19 @@ export default class RosbridgePlayer implements Player {
       showSpinner: !this._rosClient,
       showInitializing: false,
       progress: {},
-      capabilities: [],
+      capabilities: [PlayerCapabilities.setSpeed],
       playerId: this._id,
 
       activeData: {
         messages,
-        startTime: _start,
-        endTime: currentTime,
-        currentTime,
-        isPlaying: true,
-        speed: 1,
+        startTime: this._startTime,
+        endTime: this._endTime,
+        currentTime: this._currentTime,
+        isPlaying: this._isPlaying,
+        speed: this._playbackSpeed,
         // We don't support seeking, so we need to set this to any fixed value. Just avoid 0 so
         // that we don't accidentally hit falsy checks.
-        lastSeekTime: 1,
+        lastSeekTime: this._lastSeekTime,
         topics: _validProviderTopics,
         datatypes: _providerDatatypes,
       },
@@ -242,6 +295,20 @@ export default class RosbridgePlayer implements Player {
     const topicNames = subscriptions
       .map(({ topic }) => topic)
       .filter((topicName) => availableTopicsByTopicName[topicName]);
+
+    // Topics required by RosbridgePlayer
+    const essentialTopicNames = [
+      "/clock",
+      "/rosbag_player_controller/rosbag_start_time",
+      "/rosbag_player_controller/rosbag_end_time",
+    ];
+    for (const topicName of essentialTopicNames) {
+      if (topicName in availableTopicsByTopicName) {
+        if (topicNames.indexOf(topicName) === -1) {
+          topicNames.push(topicName);
+        }
+      }
+    }
 
     // Subscribe to all topics that we aren't subscribed to yet.
     for (const topicName of topicNames) {
@@ -280,8 +347,50 @@ export default class RosbridgePlayer implements Player {
   // Bunch of unsupported stuff. Just don't do anything for these.
   setPublishers(publishers: AdvertisePayload[]) {}
   publish(request: PublishPayload) {}
-  startPlayback() {}
-  pausePlayback() {}
-  seekPlayback(time: Time) {}
-  setPlaybackSpeed(speedFraction: number) {}
+  startPlayback() {
+    if (this._isServiceBusy) {
+      return;
+    }
+    const request = new ROSLIB.ServiceRequest({});
+    this._callService("/rosbag_player_controller/play", "std_srv/Trigger", request, () => {
+      this._isPlaying = true;
+    });
+  }
+  pausePlayback() {
+    if (this._isServiceBusy) {
+      return;
+    }
+    const request = new ROSLIB.ServiceRequest({});
+    this._callService("/rosbag_player_controller/pause", "std_srv/Trigger", request, () => {
+      this._isPlaying = false;
+    });
+  }
+  seekPlayback(time: Time) {
+    if (this._isServiceBusy) {
+      return;
+    }
+    const t = toSec(time) - toSec(this._startTime);
+    const request = new ROSLIB.ServiceRequest({
+      time: t,
+    });
+    this._callService("/rosbag_player_controller/seek", "controllable_rosbag_player/Seek", request, () => {
+      this._lastSeekTime = time;
+    });
+  }
+  setPlaybackSpeed(speedFraction: number) {
+    if (this._isServiceBusy) {
+      return;
+    }
+    const request = new ROSLIB.ServiceRequest({
+      speed: speedFraction,
+    });
+    this._callService(
+      "/rosbag_player_controller/set_playback_speed",
+      "controllable_rosbag_player/SetPlaybackSpeed",
+      request,
+      () => {
+        this._playbackSpeed = speedFraction;
+      }
+    );
+  }
 }
