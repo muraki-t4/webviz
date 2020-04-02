@@ -1,0 +1,12 @@
+version: '3'
+services:
+  webviz:
+    image: hdwlab/webviz:hdl-dev
+    container_name: webviz
+    ports:
+      - 3000:3000
+    volumes:
+      - ${PWD}:/opt/webviz:rw
+    working_dir: /opt/webviz
+    entrypoint: ''
+    command: npm run bootstrap && npm run build && npm run docs
