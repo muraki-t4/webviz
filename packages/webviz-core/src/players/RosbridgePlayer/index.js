@@ -32,7 +32,7 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import reportError from "webviz-core/src/util/reportError";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
-import { fromMillis, toSec } from "webviz-core/src/util/time";
+import { fromMillis, toSec, toMicroSec } from "webviz-core/src/util/time";
 
 import "roslib/build/roslib";
 
@@ -233,6 +233,7 @@ export default class RosbridgePlayer implements Player {
 
     for (const msg of this._messages) {
       if (msg.topic === "/clock") {
+        this._isPlaying = toMicroSec(this._currentTime) !== toMicroSec(msg.message.clock);
         this._currentTime = msg.message.clock;
         this._isServiceBusy = false;
       }
