@@ -32,7 +32,7 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import reportError from "webviz-core/src/util/reportError";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
-import { fromMillis, toSec } from "webviz-core/src/util/time";
+import { fromMillis, toSec, toMicroSec } from "webviz-core/src/util/time";
 
 import "roslib/build/roslib";
 
@@ -51,20 +51,26 @@ export default class RosbridgePlayer implements Player {
   _providerTopics: ?(Topic[]); // Topics as published by the WebSocket.
   _validProviderTopics: ?(Topic[]); // Same topics as above, but only the ones that have valid datatypes.
   _providerDatatypes: ?RosDatatypes; // Datatypes as published by the WebSocket.
+  _start: ?Time; // The time at which we started playing.
   _topicSubscriptions: { [topicName: string]: ROSLIB.Topic } = {}; // Active subscriptions.
   _requestedSubscriptions: SubscribePayload[] = []; // Requested subscriptions by setSubscriptions()
   _messages: Message[] = []; // Queue of messages that we'll send in next _emitState() call.
   _requestTopicsTimeout: ?TimeoutID; // setTimeout() handle for _requestTopics().
   _isPlaying: boolean = false;
   _isServiceBusy: boolean = true;
-  _currentTime: Time = fromMillis(Date.now());
-  _startTime: Time = fromMillis(Date.now());
-  _endTime: Time = fromMillis(Date.now());
-  _lastSeekTime: Time = 1;
+  _currentTime: ?Time;
+  _startTime: ?Time;
+  _endTime: ?Time;
+  _lastSeekTime: ?Time;
   _playbackSpeed: number = 1.0;
 
   constructor(url: string) {
     this._url = url;
+    this._start = fromMillis(Date.now());
+    this._startTime = fromMillis(0);
+    this._currentTime = fromMillis(Date.now());
+    this._endTime = fromMillis(Date.now());
+    this._lastSeekTime = fromMillis(1); // Avoid 0 so that we don't accidentally hit falsy checks.
     this._open();
   }
 
@@ -215,24 +221,10 @@ export default class RosbridgePlayer implements Player {
       return Promise.resolve();
     }
 
-    const { _validProviderTopics, _providerDatatypes } = this;
-    if (!_validProviderTopics || !_providerDatatypes) {
-      return this._listener({
-        isPresent: true,
-        showSpinner: true,
-        showInitializing: !!this._rosClient,
-        progress: {},
-        capabilities: [PlayerCapabilities.setSpeed],
-        playerId: this._id,
-        activeData: undefined,
-      });
-    }
-
-    // Time is always moving forward even if we don't get messages from the server.
-    setTimeout(this._emitState, 100);
-
+    // Parse messages and get current-time and rosbag information
     for (const msg of this._messages) {
       if (msg.topic === "/clock") {
+        this._isPlaying = toMicroSec(this._currentTime) !== toMicroSec(msg.message.clock);
         this._currentTime = msg.message.clock;
         this._isServiceBusy = false;
       }
@@ -245,6 +237,25 @@ export default class RosbridgePlayer implements Player {
         this._isServiceBusy = false;
       }
     }
+
+    const { _validProviderTopics, _providerDatatypes, _start } = this;
+    if (!_validProviderTopics || !_providerDatatypes || !_start) {
+      return this._listener({
+        isPresent: true,
+        showSpinner: true,
+        showInitializing: !!this._rosClient,
+        progress: {},
+        capabilities: [],
+        playerId: this._id,
+        activeData: undefined,
+      });
+    }
+
+    // Time is always moving forward even if we don't get messages from the server.
+    setTimeout(this._emitState, 100);
+
+    const { _startTime, _endTime, _currentTime, _isPlaying, _playbackSpeed, _lastSeekTime } = this;
+
     const messages = this._messages;
     this._messages = [];
     return this._listener({
@@ -257,14 +268,12 @@ export default class RosbridgePlayer implements Player {
 
       activeData: {
         messages,
-        startTime: this._startTime,
-        endTime: this._endTime,
-        currentTime: this._currentTime,
-        isPlaying: this._isPlaying,
-        speed: this._playbackSpeed,
-        // We don't support seeking, so we need to set this to any fixed value. Just avoid 0 so
-        // that we don't accidentally hit falsy checks.
-        lastSeekTime: this._lastSeekTime,
+        startTime: _startTime,
+        endTime: _endTime,
+        currentTime: _currentTime,
+        isPlaying: _isPlaying,
+        speed: _playbackSpeed,
+        lastSeekTime: _lastSeekTime,
         topics: _validProviderTopics,
         datatypes: _providerDatatypes,
       },
@@ -327,7 +336,7 @@ export default class RosbridgePlayer implements Player {
             op: "message",
             topic: topicName,
             datatype: availableTopicsByTopicName[topicName].datatype,
-            receiveTime: fromMillis(Date.now()),
+            receiveTime: this._currentTime,
             message,
           });
           this._emitState();
