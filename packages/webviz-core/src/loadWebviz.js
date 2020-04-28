@@ -64,6 +64,7 @@ const defaultHooks = {
       { label: "ROS", key: "ros" },
       { label: "Utilities", key: "utilities" },
       { label: "Debugging", key: "debugging" },
+      { label: "Tier4", key: "tier4" },
     ];
   },
   panelsByCategory: () => {

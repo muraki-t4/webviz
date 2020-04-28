@@ -13,10 +13,11 @@ import { DIAGNOSTIC_TOPIC } from "./util/globalConstants";
 
 /*
 We've split this code out seperately from the rest of the hooks so that we can lazy load these components by
-lazily importing this file at runtime. 
+lazily importing this file at runtime.
 */
 
 export function panelsByCategory() {
+  const AIDrivingInstructor = require("webviz-core/src/panels/AIDrivingInstructor").default;
   const GlobalVariables = require("webviz-core/src/panels/GlobalVariables").default;
   const DiagnosticStatusPanel = require("webviz-core/src/panels/diagnostics/DiagnosticStatusPanel").default;
   const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
@@ -60,7 +61,9 @@ export function panelsByCategory() {
     { title: "Subscribe to List", component: SubscribeToList },
   ];
 
-  return { ros, utilities, debugging };
+  const tier4 = [{ title: "AI Driving Instructor", component: AIDrivingInstructor }];
+
+  return { ros, utilities, debugging, tier4 };
 }
 
 export function perPanelHooks() {

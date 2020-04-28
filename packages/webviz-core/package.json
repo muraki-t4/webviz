@@ -9,6 +9,7 @@
     "@sentry/browser": "5.7.1",
     "@simonwep/pickr": "1.4.7",
     "@trust/webcrypto": "0.9.2",
+    "ai-instructor-panel": "0.1.0",
     "antd": "3.26.5",
     "chart.js": "davidswinegar/Chart.js#ab170d249db7cae3313d9e2515ef35283c9bb5e8",
     "chartjs-plugin-annotation": "0.5.7",
