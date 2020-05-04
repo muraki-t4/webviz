@@ -12,7 +12,6 @@ import * as React from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
-import TextContent from "../../components/TextContent";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
@@ -55,7 +54,15 @@ function AIDrivingInstructorPanel(): React.Node {
     <Container>
       <PanelToolbar floating />
       <AiInstructorPanelWrapperForRoslib websocketUrl={websocketUrl} />
-      <TextContent>Global variables are shown below.</TextContent>
+      <br />
+      <br />
+      <br />
+      <br />
+      <br />
+      <br />
+      <br />
+      <br />
+      <p>(DEBUG) Global variables are shown below.</p>
       {linked.map((name, idx) => {
         return (
           <tr key={`linked-${idx}`}>
