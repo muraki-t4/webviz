@@ -53,7 +53,7 @@ function AIDrivingInstructorPanel(): React.Node {
   return (
     <Container>
       <PanelToolbar floating />
-      <AiInstructorPanelWrapperForRoslib websocketUrl={websocketUrl} />
+      <AiInstructorPanelWrapperForRoslib websocketUrl={websocketUrl} clickedWaypointId={globalVariables.clickedWaypointId}/>
       <br />
       <br />
       <br />
