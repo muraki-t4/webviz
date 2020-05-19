@@ -17,12 +17,13 @@ import {
   BASE_DATA_SOURCE_PREFIXES,
   FEATURE_DATA_SOURCE_PREFIXES,
 } from "./topicGroupsUtils";
-import type { TopicGroupConfig, VisibilityByColumn, SelectedNamespacesByColumn, SettingsByColumn } from "./types";
+import type { TopicGroupConfig, VisibilityByColumn, NamespacesByColumn, SettingsByColumn } from "./types";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
+import { migrateLegacyIds } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/topicTreeV2Migrations";
 
-function getSelectionsFromCheckedNodes(
-  checkedNodes: string[]
+function getSelectionsFromCheckedKeys(
+  checkedKeys: string[]
 ): {
   selectedTopics: string[],
   selectedExtensions: string[],
@@ -33,7 +34,7 @@ function getSelectionsFromCheckedNodes(
   const selectedTopics = [];
   const selectedNamespacesByTopic = {};
   const selectedNamesSet = new Set();
-  checkedNodes.forEach((item) => {
+  checkedKeys.forEach((item) => {
     if (item.startsWith("t:")) {
       selectedTopics.push(item.substr("t:".length));
     } else if (item.startsWith("/")) {
@@ -80,47 +81,6 @@ const getParentNamesByTopic = microMemoize(
   }
 );
 
-type LegacyIdItem = {| legacyId: string, topic: string |} | {| legacyId: string, name: string |};
-function* generateLegacyIdItems(item: TopicConfig): Generator<LegacyIdItem, void, void> {
-  const { children, name, topic, legacyIds } = item;
-  if (legacyIds) {
-    if (topic) {
-      yield* legacyIds.map((legacyId) => ({ legacyId, topic }));
-    } else if (name) {
-      yield* legacyIds.map((legacyId) => ({ legacyId, name }));
-    }
-  }
-  if (children) {
-    for (const subItem of children) {
-      yield* generateLegacyIdItems(subItem);
-    }
-  }
-}
-
-const getLegacyIdItems = microMemoize(
-  (topicConfig): LegacyIdItem[] => {
-    return flatten(topicConfig.children.map((item) => Array.from(generateLegacyIdItems(item))));
-  }
-);
-
-// Migrate legacyIds related to topics and names to the actual names and topics.
-export function migrateLegacyIds(checkedNodes: string[]): string[] {
-  const legacyIdItems = getLegacyIdItems(TOPIC_CONFIG);
-  const newCheckedNameOrTopicByOldNames = {};
-  for (const { topic, name, legacyId } of legacyIdItems) {
-    if (name) {
-      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `name:${name}`;
-      newCheckedNameOrTopicByOldNames[`name:${legacyId}`] = `name:${name}`;
-    }
-    if (topic) {
-      newCheckedNameOrTopicByOldNames[`t:${legacyId}`] = `t:${topic}`;
-      // If both name and topic are present, only use topic as the new checkedName
-      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `t:${topic}`;
-    }
-  }
-  return checkedNodes.map((node) => newCheckedNameOrTopicByOldNames[node] || node);
-}
-
 function dataSourcePrefixToColumnIndex(dataSourcePrefix: string): number {
   return FEATURE_DATA_SOURCE_PREFIXES.includes(dataSourcePrefix) ? 1 : 0;
 }
@@ -128,17 +88,17 @@ function dataSourcePrefixToColumnIndex(dataSourcePrefix: string): number {
 type MigrateInput = {|
   topicGroupDisplayName?: string,
   topicSettings?: ?{ [topicName: string]: any },
-  checkedNodes?: ?(string[]),
+  checkedKeys?: ?(string[]),
   modifiedNamespaceTopics?: ?(string[]),
 |};
 // Create a new topic group called 'My Topics' and related fields based the old config
 export function migratePanelConfigToTopicGroupConfig({
   topicGroupDisplayName = DEFAULT_IMPORTED_GROUP_NAME,
   topicSettings,
-  checkedNodes,
+  checkedKeys,
   modifiedNamespaceTopics,
 }: MigrateInput): TopicGroupConfig {
-  if (!checkedNodes) {
+  if (!checkedKeys) {
     return {
       displayName: topicGroupDisplayName,
       visibilityByColumn: [true, true],
@@ -147,13 +107,13 @@ export function migratePanelConfigToTopicGroupConfig({
     };
   }
 
-  const migratedCheckedNodes = migrateLegacyIds(checkedNodes);
+  const migratedCheckedKeys = migrateLegacyIds(checkedKeys);
   const {
     selectedExtensions,
     selectedTopics,
     selectedNamespacesByTopic,
     selectedNamesSet,
-  } = getSelectionsFromCheckedNodes(migratedCheckedNodes);
+  } = getSelectionsFromCheckedKeys(migratedCheckedKeys);
   const parentNamesByTopic = getParentNamesByTopic(TOPIC_CONFIG);
   const nonPrefixedTopics = removeTopicPrefixes(selectedTopics);
 
@@ -276,9 +236,9 @@ function getTopicVisibilityByColumn(
 }
 
 function getTopicSelectedNamespacesByColumn(
-  selectedNamespacesByColumn: ?SelectedNamespacesByColumn,
+  selectedNamespacesByColumn: ?NamespacesByColumn,
   namespacesBySource: NamespacesBySource
-): ?{| selectedNamespacesByColumn: SelectedNamespacesByColumn |} {
+): ?{| selectedNamespacesByColumn: NamespacesByColumn |} {
   let baseNamespaces = [];
   BASE_DATA_SOURCE_PREFIXES.forEach((prefix) => {
     if (namespacesBySource[prefix]) {
@@ -378,20 +338,4 @@ export function addDefaultTopicSettings(topicGroups: TopicGroupConfig[]): TopicG
       ...getSettingsByColumnWithDefaults(item.topicName, item.settingsByColumn),
     })),
   }));
-}
-
-export function addDefaultTopicSettingsForTopicTree(topicSettings: any): any {
-  const newTopicSettings = { ...topicSettings };
-  const getDefaultSettingsHook = getGlobalHooks().startupPerPanelHooks().ThreeDimensionalViz.getDefaultSettings;
-  if (!getDefaultSettingsHook) {
-    return topicSettings;
-  }
-  const defaultSettings = getDefaultSettingsHook();
-  // Merge the defaultSettings with the existing topicSettings if it's not already set.
-  Object.keys(defaultSettings).forEach((topicName) => {
-    if (!newTopicSettings[topicName]) {
-      newTopicSettings[topicName] = defaultSettings[topicName];
-    }
-  });
-  return newTopicSettings;
 }

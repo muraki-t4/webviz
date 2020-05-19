@@ -9,19 +9,20 @@
 import MenuIcon from "@mdi/svg/svg/menu.svg";
 import cx from "classnames";
 import { last } from "lodash";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 
 import { plotableRosTypes, type PlotConfig } from "./index";
 import styles from "./PlotLegend.module.scss";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
-import MessagePathInput, { type TimestampMethod } from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
+import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import {
   type PlotPath,
   type BasePlotPath,
   isReferenceLinePlotPathType,
 } from "webviz-core/src/panels/Plot/internalTypes";
 import { lineColors } from "webviz-core/src/util/plotColors";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 
 type PlotLegendProps = {|
   paths: PlotPath[],
@@ -30,16 +31,6 @@ type PlotLegendProps = {|
   xAxisVal: "timestamp" | "index" | "custom",
   xAxisPath?: BasePlotPath,
 |};
-
-function PlotLegendToggle(props: { onToggle: () => void }) {
-  return (
-    <div className={styles.legendToggle} onClick={props.onToggle}>
-      <Icon>
-        <MenuIcon />
-      </Icon>
-    </div>
-  );
-}
 
 export default function PlotLegend(props: PlotLegendProps) {
   const { paths, saveConfig, showLegend, xAxisVal, xAxisPath } = props;
@@ -69,21 +60,34 @@ export default function PlotLegend(props: PlotLegendProps) {
     [paths, saveConfig]
   );
 
+  const { toggleToHideLegend, toggleToShowLegend } = useMemo(
+    () => ({
+      toggleToHideLegend: () => saveConfig({ showLegend: false }),
+      toggleToShowLegend: () => saveConfig({ showLegend: true }),
+    }),
+    [saveConfig]
+  );
+
   if (!showLegend) {
     return (
       <div className={styles.root}>
-        <PlotLegendToggle onToggle={() => saveConfig({ showLegend: !showLegend })} />
+        <Icon className={styles.legendToggle} onClick={toggleToShowLegend}>
+          <MenuIcon />
+        </Icon>
       </div>
     );
   }
 
   return (
     <div className={styles.root}>
-      <PlotLegendToggle onToggle={() => saveConfig({ showLegend: !showLegend })} />
+      <Icon className={styles.legendToggle} onClick={toggleToHideLegend}>
+        <MenuIcon />
+      </Icon>
       <div className={styles.item}>
         x:
-        <div className={styles.itemIconContainer} style={{ width: "auto", lineHeight: "normal" }}>
+        <div className={styles.itemIconContainer} style={{ width: "auto", lineHeight: "normal", zIndex: 2 }}>
           <Dropdown
+            dataTest="plot-legend-x-axis-menu"
             value={xAxisVal}
             btnStyle={{ backgroundColor: "transparent", padding: 3 }}
             onChange={(newXAxisVal) => saveConfig({ xAxisVal: newXAxisVal })}
@@ -127,6 +131,7 @@ export default function PlotLegend(props: PlotLegendProps) {
               y:
               <div
                 className={styles.itemIconContainer}
+                style={{ zIndex: 1 }}
                 onClick={() => {
                   const newPaths = paths.slice();
                   newPaths[index] = { ...newPaths[index], enabled: !newPaths[index].enabled };
