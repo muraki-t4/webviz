@@ -47,12 +47,12 @@ export const POINT_CLOUD_MESSAGE = {
     },
   },
   height: 1,
-  is_bigendian: 0,
+  is_bigendian: false,
   is_dense: 1,
   point_step: 32,
   row_step: 32,
   width: 2,
-  data: [
+  data: new Uint8Array([
     // point 1
     125,
     236,
@@ -152,7 +152,7 @@ export const POINT_CLOUD_MESSAGE = {
     254,
     127,
     8,
-  ],
+  ]),
 };
 
 export const POINT_CLOUD_WITH_ADDITIONAL_FIELDS = {
@@ -194,7 +194,7 @@ export const POINT_CLOUD_WITH_ADDITIONAL_FIELDS = {
       count: 1,
     },
     {
-      name: "foo16",
+      name: "foo16_some_really_really_long_name",
       offset: 19,
       datatype: 3,
       count: 1,
@@ -214,12 +214,12 @@ export const POINT_CLOUD_WITH_ADDITIONAL_FIELDS = {
     },
   },
   height: 1,
-  is_bigendian: 0,
+  is_bigendian: false,
   is_dense: 1,
   point_step: 21,
   row_step: 21,
   width: 2,
-  data: [
+  data: new Uint8Array([
     0, //   1, start of point 1
     0, //   2
     0, //   3
@@ -263,5 +263,5 @@ export const POINT_CLOUD_WITH_ADDITIONAL_FIELDS = {
     0, //   40, baz: int32 = 7
     2, //   41
     0, //   42, foo16: int16 = 2
-  ],
+  ]),
 };

@@ -28,7 +28,9 @@
   cursor: not-allowed;
 }
 
-.quickActionsOverlay {
+.tabActionsOverlay,
+.quickActionsOverlay,
+.prohibitedSelection {
   cursor: pointer;
   position: absolute;
   top: 0;
@@ -38,7 +40,7 @@
   z-index: 100000; // highest level within panel
   display: none;
 
-  .root:hover &,
+  .root:hover > &,
   // for screenshot tests
   &:global(.hoverForScreenshot) {
     background-color: rgba(110, 81, 238, 0.15);
@@ -94,6 +96,24 @@
     font-size: 12px;
     color: $text-muted;
   }
+}
+
+.prohibitedSelection {
+  padding: 10px;
+
+  .root:hover &,
+  // for screenshot tests
+  &:global(.hoverForScreenshot) {
+    background-color: rgba(45, 45, 51, 0.7);
+  }
+}
+
+.tabActionsOverlay button {
+  width: 145px;
+  height: 40px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .exitFullScreen {

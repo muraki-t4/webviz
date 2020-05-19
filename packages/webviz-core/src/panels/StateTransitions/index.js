@@ -20,7 +20,7 @@ import MessageHistoryDEPRECATED, {
   type MessageHistoryData,
   type MessageHistoryItem,
 } from "webviz-core/src/components/MessageHistoryDEPRECATED";
-import MessagePathInput, { type TimestampMethod } from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
+import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TimeBasedChart, {
@@ -33,6 +33,7 @@ import mixins from "webviz-core/src/styles/mixins.module.scss";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import { positiveModulo } from "webviz-core/src/util";
 import { darkColor, lineColors } from "webviz-core/src/util/plotColors";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 import { getTimestampForMessage, subtractTimes, toSec } from "webviz-core/src/util/time";
 import { grey } from "webviz-core/src/util/toolsColorScheme";
 
@@ -140,7 +141,6 @@ const yAxes = [
       fontSize: 10,
       fontColor: "#eee",
       maxRotation: 0,
-      callback: () => "",
     },
     type: "category",
     offset: true,
@@ -152,10 +152,6 @@ const plugins = {
     anchor: "center",
     align: -45,
     offset: 6,
-    formatter: (value: any, context: any) => {
-      return value?.label || null;
-    },
-    color: (context: any) => context.dataset.data[context.dataIndex].labelColor,
     clip: true,
     font: {
       family: fontFamily,
@@ -295,8 +291,11 @@ class StateTransitions extends React.PureComponent<Props> {
 
                   const valueForColor = typeof value === "string" ? stringHash(value) : Math.round(Number(value));
                   const color = baseColors[positiveModulo(valueForColor, Object.values(baseColors).length)];
-                  dataItem.pointBackgroundColor.push(darkColor(color));
-                  dataItem.colors.push(color);
+                  // We add all points, colors, tooltips, etc to the *beginning* of the list, not the end. When
+                  // datalabels overlap we usually care about the later ones (further right). By putting those points
+                  // first in the list, we prioritize datalabels there when the library does its autoclipping.
+                  dataItem.pointBackgroundColor.unshift(darkColor(color));
+                  dataItem.colors.unshift(color);
                   const label = constantName ? `${constantName} (${String(value)})` : String(value);
                   const x = toSec(subtractTimes(timestamp, startTime));
                   const y = pathIndex.toString();
@@ -309,16 +308,16 @@ class StateTransitions extends React.PureComponent<Props> {
                     constantName,
                     startTime,
                   };
-                  tooltips.push(tooltip);
-                  const dataPoint: DataPoint = { x, y, tooltip };
+                  tooltips.unshift(tooltip);
+                  const dataPoint: DataPoint = { x, y };
                   const showDatalabel = previousValue === undefined || previousValue !== value;
                   // Use "auto" here so that the datalabels library can clip datalabels if they overlap.
-                  dataItem.datalabels.display.push(showDatalabel ? "auto" : false);
+                  dataItem.datalabels.display.unshift(showDatalabel ? "auto" : false);
                   if (showDatalabel) {
                     dataPoint.label = label;
                     dataPoint.labelColor = color;
                   }
-                  dataItem.data.push(dataPoint);
+                  dataItem.data.unshift(dataPoint);
                   previousValue = value;
                 }
                 return dataItem;
