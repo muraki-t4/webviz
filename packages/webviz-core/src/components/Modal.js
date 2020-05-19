@@ -8,10 +8,10 @@
 
 import CloseIcon from "@mdi/svg/svg/close.svg";
 import * as React from "react";
-import KeyListener from "react-key-listener";
 import styled from "styled-components";
 
 import Icon from "webviz-core/src/components/Icon";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import colors from "webviz-core/src/styles/colors.module.scss";
 
 // Generic modal that renders a semi-transparent backdrop and close icon.
@@ -31,7 +31,7 @@ const Container = styled.div`
   left: 0;
   bottom: 0;
   right: 0;
-  z-index: 999;
+  z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,6 +86,7 @@ export default class Modal extends React.PureComponent<Props> {
           <KeyListener global keyDownHandlers={{ Escape: this.props.onRequestClose }} />
           <Icon
             fade
+            dataTest="modal-close-icon"
             style={{
               position: "absolute",
               right: 16,

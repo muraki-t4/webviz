@@ -11,7 +11,8 @@ import { push } from "connected-react-router";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type {
   ImportPanelLayoutPayload,
-  SaveConfigPayload,
+  ChangePanelLayoutPayload,
+  SaveConfigsPayload,
   SaveFullConfigPayload,
   UserNodes,
   PlaybackConfig,
@@ -19,9 +20,21 @@ import type {
 import type { Dispatch, GetState } from "webviz-core/src/types/Store";
 import { LAYOUT_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
-export type SAVE_PANEL_CONFIG = {
-  type: "SAVE_PANEL_CONFIG",
-  payload: SaveConfigPayload,
+const PANELS_ACTION_TYPES = {
+  CHANGE_PANEL_LAYOUT: "CHANGE_PANEL_LAYOUT",
+  IMPORT_PANEL_LAYOUT: "IMPORT_PANEL_LAYOUT",
+  SAVE_PANEL_CONFIGS: "SAVE_PANEL_CONFIGS",
+  SAVE_FULL_PANEL_CONFIG: "SAVE_FULL_PANEL_CONFIG",
+  OVERWRITE_GLOBAL_DATA: "OVERWRITE_GLOBAL_DATA",
+  SET_GLOBAL_DATA: "SET_GLOBAL_DATA",
+  SET_USER_NODES: "SET_USER_NODES",
+  SET_LINKED_GLOBAL_VARIABLES: "SET_LINKED_GLOBAL_VARIABLES",
+  SET_PLAYBACK_CONFIG: "SET_PLAYBACK_CONFIG",
+};
+
+export type SAVE_PANEL_CONFIGS = {
+  type: "SAVE_PANEL_CONFIGS",
+  payload: SaveConfigsPayload,
 };
 export type SAVE_FULL_PANEL_CONFIG = {
   type: "SAVE_FULL_PANEL_CONFIG",
@@ -46,12 +59,15 @@ function maybeStripLayoutId(dispatch: Dispatch, getState: GetState): void {
   }
 }
 
-export const savePanelConfig = (payload: SaveConfigPayload): Dispatcher<SAVE_PANEL_CONFIG> => (dispatch, getState) => {
+export const savePanelConfigs = (payload: SaveConfigsPayload): Dispatcher<SAVE_PANEL_CONFIGS> => (
+  dispatch,
+  getState
+) => {
   if (!payload.silent) {
     maybeStripLayoutId(dispatch, getState);
   }
   return dispatch({
-    type: "SAVE_PANEL_CONFIG",
+    type: PANELS_ACTION_TYPES.SAVE_PANEL_CONFIGS,
     payload,
   });
 };
@@ -61,7 +77,7 @@ export const saveFullPanelConfig = (payload: SaveFullConfigPayload): Dispatcher<
   getState
 ) => {
   return dispatch({
-    type: "SAVE_FULL_PANEL_CONFIG",
+    type: PANELS_ACTION_TYPES.SAVE_FULL_PANEL_CONFIG,
     payload,
   });
 };
@@ -82,41 +98,41 @@ export const importPanelLayout = (
     maybeStripLayoutId(dispatch, getState);
   }
   return dispatch({
-    type: "IMPORT_PANEL_LAYOUT",
+    type: PANELS_ACTION_TYPES.IMPORT_PANEL_LAYOUT,
     payload: skipSettingLocalStorage ? { ...payload, skipSettingLocalStorage } : payload,
   });
 };
 
-export type CHANGE_PANEL_LAYOUT = {
-  type: "CHANGE_PANEL_LAYOUT",
-  layout: any,
-};
+export type CHANGE_PANEL_LAYOUT = { type: "CHANGE_PANEL_LAYOUT", payload: ChangePanelLayoutPayload };
 
-export const changePanelLayout = (layout: any): Dispatcher<CHANGE_PANEL_LAYOUT> => (dispatch, getState) => {
+export const changePanelLayout = (payload: ChangePanelLayoutPayload): Dispatcher<CHANGE_PANEL_LAYOUT> => (
+  dispatch,
+  getState
+) => {
   maybeStripLayoutId(dispatch, getState);
   return dispatch({
-    type: "CHANGE_PANEL_LAYOUT",
-    layout,
+    type: PANELS_ACTION_TYPES.CHANGE_PANEL_LAYOUT,
+    payload,
   });
 };
 
 type OVERWRITE_GLOBAL_DATA = {
   type: "OVERWRITE_GLOBAL_DATA",
-  payload: any,
+  payload: { [key: string]: any },
 };
 
-export const overwriteGlobalVariables = (payload: any): OVERWRITE_GLOBAL_DATA => ({
-  type: "OVERWRITE_GLOBAL_DATA",
+export const overwriteGlobalVariables = (payload: { [key: string]: any }): OVERWRITE_GLOBAL_DATA => ({
+  type: PANELS_ACTION_TYPES.OVERWRITE_GLOBAL_DATA,
   payload,
 });
 
 type SET_GLOBAL_DATA = {
   type: "SET_GLOBAL_DATA",
-  payload: any,
+  payload: { [key: string]: any },
 };
 
-export const setGlobalVariables = (payload: any): SET_GLOBAL_DATA => ({
-  type: "SET_GLOBAL_DATA",
+export const setGlobalVariables = (payload: { [key: string]: any }): SET_GLOBAL_DATA => ({
+  type: PANELS_ACTION_TYPES.SET_GLOBAL_DATA,
   payload,
 });
 
@@ -126,7 +142,7 @@ type SET_WEBVIZ_NODES = {
 };
 
 export const setUserNodes = (payload: UserNodes): SET_WEBVIZ_NODES => ({
-  type: "SET_USER_NODES",
+  type: PANELS_ACTION_TYPES.SET_USER_NODES,
   payload,
 });
 
@@ -136,27 +152,30 @@ type SET_LINKED_GLOBAL_VARIABLES = {
 };
 
 export const setLinkedGlobalVariables = (payload: LinkedGlobalVariables): SET_LINKED_GLOBAL_VARIABLES => ({
-  type: "SET_LINKED_GLOBAL_VARIABLES",
+  type: PANELS_ACTION_TYPES.SET_LINKED_GLOBAL_VARIABLES,
   payload,
 });
 
 type SET_PLAYBACK_CONFIG = {
   type: "SET_PLAYBACK_CONFIG",
-  payload: PlaybackConfig,
+  payload: $Shape<PlaybackConfig>,
 };
 
-export const setPlaybackConfig = (payload: PlaybackConfig): SET_PLAYBACK_CONFIG => ({
-  type: "SET_PLAYBACK_CONFIG",
+export const setPlaybackConfig = (payload: $Shape<PlaybackConfig>): SET_PLAYBACK_CONFIG => ({
+  type: PANELS_ACTION_TYPES.SET_PLAYBACK_CONFIG,
   payload,
 });
 
 export type PanelsActions =
   | CHANGE_PANEL_LAYOUT
   | IMPORT_PANEL_LAYOUT
-  | SAVE_PANEL_CONFIG
+  | SAVE_PANEL_CONFIGS
   | SAVE_FULL_PANEL_CONFIG
   | OVERWRITE_GLOBAL_DATA
   | SET_GLOBAL_DATA
   | SET_WEBVIZ_NODES
   | SET_LINKED_GLOBAL_VARIABLES
   | SET_PLAYBACK_CONFIG;
+
+type PanelsActionTypes = $Values<typeof PANELS_ACTION_TYPES>;
+export const panelEditingActions = new Set<PanelsActionTypes>(Object.keys(PANELS_ACTION_TYPES));

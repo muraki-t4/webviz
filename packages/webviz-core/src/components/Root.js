@@ -12,20 +12,26 @@ import { hot } from "react-hot-loader/root";
 import { connect, Provider } from "react-redux";
 
 import styles from "./Root.module.scss";
+import { redoLayoutChange, undoLayoutChange } from "webviz-core/src/actions/layoutHistory";
 import { importPanelLayout } from "webviz-core/src/actions/panels";
 import Logo from "webviz-core/src/assets/logo.svg";
 import AppMenu from "webviz-core/src/components/AppMenu";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
-import ErrorDisplay from "webviz-core/src/components/ErrorDisplay";
 import Icon from "webviz-core/src/components/Icon";
+import LayoutHistoryKeyListener from "webviz-core/src/components/LayoutHistoryKeyListener";
 import LayoutMenu from "webviz-core/src/components/LayoutMenu";
+import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
+import NotificationDisplay from "webviz-core/src/components/NotificationDisplay";
 import PanelLayout from "webviz-core/src/components/PanelLayout";
 import PlaybackControls from "webviz-core/src/components/PlaybackControls";
 import PlayerManager from "webviz-core/src/components/PlayerManager";
+import SelectableTimestamp from "webviz-core/src/components/SelectableTimestamp";
 import { TinyConnectionPicker } from "webviz-core/src/components/TinyConnectionPicker";
 import Toolbar from "webviz-core/src/components/Toolbar";
 import withDragDropContext from "webviz-core/src/components/withDragDropContext";
+import type { State } from "webviz-core/src/reducers";
 import getGlobalStore from "webviz-core/src/store/getGlobalStore";
+import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import { setReactHotLoaderConfig } from "webviz-core/src/util/dev";
 import { showHelpModalOpenSource } from "webviz-core/src/util/showHelpModalOpenSource";
 
@@ -36,6 +42,10 @@ const LOGO_SIZE = 24;
 
 type Props = {|
   importPanelLayout: typeof importPanelLayout,
+  redoStateCount: number,
+  undoStateCount: number,
+  redoLayoutChange: () => void,
+  undoLayoutChange: () => void,
 |};
 class App extends React.PureComponent<Props> {
   container: ?HTMLDivElement;
@@ -53,18 +63,44 @@ class App extends React.PureComponent<Props> {
   render() {
     return (
       <div ref={(el) => (this.container = el)} className="app-container" tabIndex={0}>
+        <LayoutHistoryKeyListener />
         <PlayerManager>
           {({ inputDescription }) => (
             <>
               <Toolbar>
-                <div className={styles.logoWrapper}>
-                  <a href="/">
-                    <Logo width={LOGO_SIZE} height={LOGO_SIZE} />
-                  </a>
-                  webviz
+                <div className={styles.left}>
+                  <div className={styles.logoWrapper}>
+                    <a href="/">
+                      <Logo width={LOGO_SIZE} height={LOGO_SIZE} />
+                    </a>
+                    webviz
+                  </div>
+                  <MessagePipelineConsumer>
+                    {({ playerState, seekPlayback, pausePlayback }: MessagePipelineContext) => {
+                      if (inScreenshotTests()) {
+                        // In our open-source integration test the Rosbridge playback emits messages
+                        // at the current timestamp, so this always looks different in screenshots.
+                        return null;
+                      }
+                      if (!playerState.activeData) {
+                        return null;
+                      }
+                      const { currentTime, startTime, endTime } = playerState.activeData;
+
+                      return (
+                        <SelectableTimestamp
+                          pausePlayback={pausePlayback}
+                          seekPlayback={seekPlayback}
+                          currentTime={currentTime}
+                          startTime={startTime}
+                          endTime={endTime}
+                        />
+                      );
+                    }}
+                  </MessagePipelineConsumer>
                 </div>
                 <div className={styles.block} style={{ marginRight: 5 }}>
-                  <ErrorDisplay />
+                  <NotificationDisplay />
                 </div>
                 <div className={styles.block}>
                   <Icon tooltip="Help" small fade onClick={showHelpModalOpenSource}>
@@ -75,7 +111,12 @@ class App extends React.PureComponent<Props> {
                   <AppMenu />
                 </div>
                 <div className={styles.block}>
-                  <LayoutMenu />
+                  <LayoutMenu
+                    redoLayoutChange={this.props.redoLayoutChange}
+                    redoStateCount={this.props.redoStateCount}
+                    undoLayoutChange={this.props.undoLayoutChange}
+                    undoStateCount={this.props.undoStateCount}
+                  />
                 </div>
                 <div className={styles.block}>
                   <TinyConnectionPicker inputDescription={inputDescription} />
@@ -96,10 +137,11 @@ class App extends React.PureComponent<Props> {
 }
 
 const ConnectedApp = connect<Props, {}, _, _, _, _>(
-  null,
-  {
-    importPanelLayout,
-  }
+  ({ layoutHistory: { redoStates, undoStates } }: State) => ({
+    redoStateCount: redoStates.length,
+    undoStateCount: undoStates.length,
+  }),
+  { importPanelLayout, redoLayoutChange, undoLayoutChange }
 )(withDragDropContext(App));
 
 const Root = () => {

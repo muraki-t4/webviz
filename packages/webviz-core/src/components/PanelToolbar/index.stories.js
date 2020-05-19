@@ -17,7 +17,7 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 import PanelToolbar from "./index";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
-import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
+import MockPanelContextProvider from "webviz-core/src/components/MockPanelContextProvider";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 
@@ -27,9 +27,9 @@ class MosaicWrapper extends React.Component<{| layout?: any, children: React.Nod
     return (
       <Mosaic
         renderTile={(id, path) => (
-          <MosaicWindow path={path} toolbarControls={<div />}>
+          <MosaicWindow path={path} toolbarControls={<div />} renderPreview={() => null}>
             <div style={{ width, height: 300, padding: 30, position: "relative" }}>
-              {id === "dummy" ? this.props.children : "Sibling Panel"}
+              {id === "Sibling" ? "Sibling Panel" : this.props.children}
             </div>
           </MosaicWindow>
         )}
@@ -134,7 +134,19 @@ storiesOf("<PanelToolbar>", module)
     class Story extends React.Component<{}> {
       render() {
         return (
-          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "X" }}>
+          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "Sibling" }}>
+            <PanelToolbarWithOpenMenu />
+          </MosaicWrapper>
+        );
+      }
+    }
+    return <Story />;
+  })
+  .add("menu for Tab panel", () => {
+    class Story extends React.Component<{}> {
+      render() {
+        return (
+          <MosaicWrapper layout={{ direction: "row", first: "Tab", second: "Sibling" }}>
             <PanelToolbarWithOpenMenu />
           </MosaicWrapper>
         );
@@ -146,7 +158,7 @@ storiesOf("<PanelToolbar>", module)
     class Story extends React.Component<{}> {
       render() {
         return (
-          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "X" }}>
+          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "Sibling" }}>
             <PanelToolbarWithOpenMenu hideToolbars />
           </MosaicWrapper>
         );

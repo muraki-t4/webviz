@@ -13,13 +13,14 @@ import { DIAGNOSTIC_TOPIC } from "./util/globalConstants";
 
 /*
 We've split this code out seperately from the rest of the hooks so that we can lazy load these components by
-lazily importing this file at runtime. 
+lazily importing this file at runtime.
 */
 
 export function panelsByCategory() {
-  const GlobalVariables = require("webviz-core/src/panels/GlobalVariables").default;
   const DiagnosticStatusPanel = require("webviz-core/src/panels/diagnostics/DiagnosticStatusPanel").default;
   const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
+  const GlobalVariables = require("webviz-core/src/panels/GlobalVariables").default;
+  const GlobalVariableSlider = require("webviz-core/src/panels/GlobalVariableSlider").default;
   const ImageViewPanel = require("webviz-core/src/panels/ImageView").default;
   const Internals = require("webviz-core/src/panels/Internals").default;
   const NodePlayground = require("webviz-core/src/panels/NodePlayground").default;
@@ -27,10 +28,12 @@ export function panelsByCategory() {
   const NumberOfRenders = require("webviz-core/src/panels/NumberOfRenders").default;
   const PlaybackPerformance = require("webviz-core/src/panels/PlaybackPerformance").default;
   const Plot = require("webviz-core/src/panels/Plot").default;
+  const Publish = require("webviz-core/src/panels/Publish").default;
   const RawMessages = require("webviz-core/src/panels/RawMessages").default;
   const Rosout = require("webviz-core/src/panels/Rosout").default;
   const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
   const SubscribeToList = require("webviz-core/src/panels/SubscribeToList").default;
+  const Tab = require("webviz-core/src/panels/Tab").default;
   const TwoDimensionalPlot = require("webviz-core/src/panels/TwoDimensionalPlot").default;
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
   const { ndash } = require("webviz-core/src/util/entities");
@@ -42,6 +45,7 @@ export function panelsByCategory() {
     { title: `Diagnostics ${ndash} Detail`, component: DiagnosticStatusPanel },
     { title: "Image", component: ImageViewPanel },
     { title: "Plot", component: Plot },
+    { title: "Publish", component: Publish },
     { title: "Raw Messages", component: RawMessages },
     { title: "rosout", component: Rosout },
     { title: "State Transitions", component: StateTransitions },
@@ -49,8 +53,10 @@ export function panelsByCategory() {
 
   const utilities = [
     { title: "Global Variables", component: GlobalVariables },
+    { title: "Global Variable Slider", component: GlobalVariableSlider },
     { title: "Node Playground", component: NodePlayground },
     { title: "Notes", component: Note },
+    { title: "Tab", component: Tab },
     { title: "Webviz Internals", component: Internals },
   ];
 
@@ -98,6 +104,7 @@ export function perPanelHooks() {
       defaultConfig: {
         cameraTopic: "",
         enabledMarkerTopics: [],
+        customMarkerTopicOptions: [],
         scale: 0.2,
         transformMarkers: false,
         synchronize: false,
@@ -106,14 +113,16 @@ export function perPanelHooks() {
         offset: [0, 0],
       },
       imageMarkerDatatypes: ["visualization_msgs/ImageMarker"],
-      imageMarkerArrayDatatypes: [],
       canTransformMarkersByTopic: (topic) => !topic.includes("rect"),
+    },
+    GlobalVariableSlider: {
+      getVariableSpecificOutput: () => null,
     },
     StateTransitions: { defaultConfig: { paths: [] }, customStateTransitionColors: {} },
     ThreeDimensionalViz: {
       defaultConfig: {
-        checkedNodes: ["name:Topics"],
-        expandedNodes: ["name:Topics"],
+        checkedKeys: ["name:Topics"],
+        expandedKeys: ["name:Topics"],
         followTf: null,
         cameraState: {},
         modifiedNamespaceTopics: [],
@@ -165,7 +174,9 @@ export function perPanelHooks() {
         errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${msg.datatype}`);
       },
       getMessagePose: (msg) => msg.message.pose,
-      addMarkerToCollector: () => {},
+      addMarkerToCollector(add, topic, marker, setTopicError) {
+        setTopicError(topic, `Unsupported marker type: ${marker.type}`);
+      },
       getSyntheticArrowMarkerColor: () => ({ r: 0, g: 0, b: 1, a: 0.5 }),
       getFlattenedPose: () => undefined,
       getOccupancyGridValues: (topic) => [0.5, "map"],

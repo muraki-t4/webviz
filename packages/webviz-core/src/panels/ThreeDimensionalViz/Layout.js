@@ -19,7 +19,6 @@ import React, {
   useLayoutEffect,
   useEffect,
 } from "react";
-import KeyListener from "react-key-listener";
 import {
   PolygonBuilder,
   DrawPolygons,
@@ -31,6 +30,7 @@ import {
 import { type Time } from "rosbag";
 
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
@@ -48,7 +48,10 @@ import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutTool
 import LayoutTopicSettings from "webviz-core/src/panels/ThreeDimensionalViz/LayoutTopicSettings";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
-import { getUpdatedGlobalVariablesBySelectedObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
+import {
+  getUpdatedGlobalVariablesBySelectedObject,
+  type TargetPose,
+} from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import TopicSelector from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
 import treeBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/treeBuilder";
@@ -70,6 +73,7 @@ export type ClickedPosition = { clientX: number, clientY: number };
 
 export type LayoutToolbarSharedProps = {|
   cameraState: $Shape<CameraState>,
+  targetPose: ?TargetPose,
   followOrientation: boolean,
   followTf?: string | false,
   onAlignXYAxis: () => void,
@@ -113,6 +117,7 @@ export type EditTopicState = { tooltipPosX: number, topic: Topic };
 
 export default function Layout({
   cameraState,
+  targetPose,
   children,
   cleared,
   currentTime,
@@ -131,8 +136,8 @@ export default function Layout({
   setSubscriptions,
   config: {
     autoTextBackgroundColor,
-    expandedNodes,
-    checkedNodes,
+    expandedKeys,
+    checkedKeys,
     flattenMarkers,
     modifiedNamespaceTopics = [],
     pinTopics,
@@ -146,10 +151,10 @@ export default function Layout({
   // toggle visibility on topics by temporarily storing a list of hidden topics on the state
   const [hiddenTopics, setHiddenTopics] = useState([]);
 
-  const { topicConfig, newCheckedNodes } = useMemo(
+  const { topicConfig, newCheckedKeys } = useMemo(
     () =>
       getTopicConfig({
-        checkedNodes,
+        checkedKeys,
         topicDisplayMode,
         topics,
         // $FlowFixMe
@@ -157,30 +162,30 @@ export default function Layout({
           getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES
         ),
       }),
-    [checkedNodes, topicDisplayMode, topics]
+    [checkedKeys, topicDisplayMode, topics]
   );
 
   // update open source checked nodes
   useLayoutEffect(
     () => {
-      const isOpenSource = checkedNodes.length === 1 && checkedNodes[0] === "name:Topics" && topics.length;
+      const isOpenSource = checkedKeys.length === 1 && checkedKeys[0] === "name:Topics" && topics.length;
       if (isOpenSource) {
         saveConfig(
-          { checkedNodes: isOpenSource ? checkedNodes.concat(topics.map((t) => t.name)) : checkedNodes },
+          { checkedKeys: isOpenSource ? checkedKeys.concat(topics.map((t) => t.name)) : checkedKeys },
           { keepLayoutInUrl: true }
         );
       }
     },
-    [checkedNodes, saveConfig, topics]
+    [checkedKeys, saveConfig, topics]
   );
 
   useLayoutEffect(
     () => {
-      if (!isEqual(checkedNodes.sort(), newCheckedNodes.sort())) {
-        saveConfig({ checkedNodes: newCheckedNodes });
+      if (!isEqual(checkedKeys.sort(), newCheckedKeys.sort())) {
+        saveConfig({ checkedKeys: newCheckedKeys });
       }
     },
-    [checkedNodes, newCheckedNodes, saveConfig]
+    [checkedKeys, newCheckedKeys, saveConfig]
   );
 
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
@@ -241,8 +246,8 @@ export default function Layout({
   const defaultTree = useMemo(
     () =>
       treeBuilder({
-        checkedNodes,
-        expandedNodes: [],
+        checkedKeys,
+        expandedKeys: [],
         modifiedNamespaceTopics: [],
         namespaces: [],
         topics,
@@ -336,8 +341,8 @@ export default function Layout({
       topicTreeRef.current = treeBuilder({
         topics,
         namespaces: sceneBuilder.allNamespaces,
-        checkedNodes,
-        expandedNodes,
+        checkedKeys,
+        expandedKeys,
         modifiedNamespaceTopics,
         transforms: transforms.values(),
         editedTopics,
@@ -351,9 +356,9 @@ export default function Layout({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps, instead of trigger change on transforms, we need to use transforms.values().length
     [
-      checkedNodes,
+      checkedKeys,
       editedTopics,
-      expandedNodes,
+      expandedKeys,
       filterText,
       modifiedNamespaceTopics,
       sceneBuilder.allNamespaces,
@@ -372,6 +377,11 @@ export default function Layout({
     [polygonBuilder]
   );
 
+  const isDrawing = useMemo(() => measureInfo.measureState !== "idle" || drawingTabType === POLYGON_TAB_TYPE, [
+    drawingTabType,
+    measureInfo.measureState,
+  ]);
+
   // use callbackInputsRef to prevent unnecessary callback changes
   const callbackInputsRef = useRef({
     cameraState,
@@ -384,6 +394,7 @@ export default function Layout({
     hideTopicTreeCount,
     topics,
     autoSyncCameraState: !!autoSyncCameraState,
+    isDrawing,
   });
   callbackInputsRef.current = {
     cameraState,
@@ -396,6 +407,7 @@ export default function Layout({
     hideTopicTreeCount,
     topics,
     autoSyncCameraState: !!autoSyncCameraState,
+    isDrawing,
   };
 
   const handleEvent = useCallback((eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
@@ -433,6 +445,11 @@ export default function Layout({
     () => {
       return {
         onClick: (ev: MouseEvent, args: ?ReglClickInfo) => {
+          // Don't set any clicked objects when measuring distance or drawing polygons. e.g. object selection context menu
+          // might show up right after finished measuring.
+          if (callbackInputsRef.current.isDrawing) {
+            return;
+          }
           const selectedObjects = (args && args.objects) || [];
           const clickedPosition = { clientX: ev.clientX, clientY: ev.clientY };
           if (selectedObjects.length === 0) {
@@ -536,11 +553,6 @@ export default function Layout({
     [glTextEnabled, searchTextProps, toggleCameraMode]
   );
 
-  const isDrawing = useMemo(
-    () => (measuringElRef.current && measuringElRef.current.measureActive) || drawingTabType === POLYGON_TAB_TYPE,
-    [drawingTabType]
-  );
-
   const markerProviders = useMemo(() => extensions.markerProviders.concat([sceneBuilder, transformsBuilder]), [
     extensions.markerProviders,
     sceneBuilder,
@@ -572,7 +584,12 @@ export default function Layout({
   );
 
   return (
-    <div className={styles.container} ref={wrapperRef} style={{ cursor: cursorType }} onClick={onControlsOverlayClick}>
+    <div
+      className={styles.container}
+      ref={wrapperRef}
+      style={{ cursor: cursorType }}
+      onClick={onControlsOverlayClick}
+      data-test="3dviz-layout">
       <KeyListener keyDownHandlers={keyDownHandlers} />
       <PanelToolbar
         floating
@@ -589,9 +606,9 @@ export default function Layout({
       <div style={videoRecordingStyle}>
         <TopicSelector
           autoTextBackgroundColor={!!autoTextBackgroundColor}
-          checkedNodes={checkedNodes}
+          checkedKeys={checkedKeys}
           editedTopics={editedTopics}
-          expandedNodes={expandedNodes}
+          expandedKeys={expandedKeys}
           hideTopicTreeCount={hideTopicTreeCount}
           modifiedNamespaceTopics={modifiedNamespaceTopics}
           namespaces={sceneBuilder.allNamespaces}
@@ -639,12 +656,13 @@ export default function Layout({
           <div style={videoRecordingStyle}>
             <LayoutToolbar
               cameraState={cameraState}
+              targetPose={targetPose}
               debug={debug}
               drawingTabType={drawingTabType}
+              isDrawing={isDrawing}
               followOrientation={followOrientation}
               followTf={followTf}
               interactionData={selectedObject && selectedObject.object && selectedObject.object.interactionData}
-              isDrawing={isDrawing}
               isPlaying={isPlaying}
               measureInfo={measureInfo}
               measuringElRef={measuringElRef}

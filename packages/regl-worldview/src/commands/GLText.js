@@ -5,7 +5,7 @@ import memoizeOne from "memoize-one";
 import React, { useState } from "react";
 
 import type { Color } from "../types";
-import { defaultBlend, defaultDepth, disabledDepth, toColor } from "../utils/commandUtils";
+import { defaultBlend, defaultDepth, toColor } from "../utils/commandUtils";
 import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
@@ -46,23 +46,17 @@ type Props = {
   alphabet?: string[],
 };
 
-type FontAtlas = {|
-  textureData: Uint8Array,
-  textureWidth: number,
-  textureHeight: number,
-  charInfo: {
-    [char: string]: {|
-      x: number,
-      y: number,
-      width: number,
-    |},
-  },
-|};
+type CharacterLocations = {
+  [char: string]: {|
+    x: number,
+    y: number,
+    width: number,
+  |},
+};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
 const MIN_RESOLUTION = 40;
 const DEFAULT_RESOLUTION = 160;
-const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
 const BUFFER = 10;
@@ -94,7 +88,14 @@ const setMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker, yOff
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
-    (charSet: Set<string>, resolution: number): FontAtlas => {
+    // We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
+    (
+      charSet: Set<string>,
+      _setSize,
+      resolution: number,
+      atlasTexture: any,
+      maxAtlasWidth: number
+    ): CharacterLocations => {
       const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
       const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
 
@@ -108,7 +109,7 @@ const createMemoizedBuildAtlas = () =>
       for (const char of charSet) {
         const width = ctx.measureText(char).width;
         const dx = Math.ceil(width) + 2 * BUFFER;
-        if (x + dx > MAX_ATLAS_WIDTH) {
+        if (x + dx > maxAtlasWidth) {
           x = 0;
           y += rowHeight;
         }
@@ -134,7 +135,16 @@ const createMemoizedBuildAtlas = () =>
         }
       }
 
-      return { textureData, textureWidth, textureHeight, charInfo };
+      atlasTexture({
+        data: textureData,
+        width: textureWidth,
+        height: textureHeight,
+        format: "alpha",
+        wrap: "clamp",
+        mag: "linear",
+        min: "linear",
+      });
+      return charInfo;
     }
   );
 
@@ -304,60 +314,60 @@ const frag = `
 function makeTextCommand(alphabet?: string[]) {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
   const charSet = new Set(alphabet || []);
-  let charSetInitialized = false;
   const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
-    const makeDrawText = (isHitmap: boolean) => {
-      return regl({
-        // When using scale invariance, we want the text to be drawn on top
-        // of other elements. This is achieved by disabling depth testing
-        // In addition, make sure the <GLText /> command is the last one
-        // being rendered.
-        depth: command.scaleInvariant ? disabledDepth : defaultDepth,
-        blend: defaultBlend,
-        primitive: "triangle strip",
-        vert,
-        frag,
-        uniforms: {
-          atlas: atlasTexture,
-          atlasSize: () => [atlasTexture.width, atlasTexture.height],
-          fontSize: command.resolution,
-          cutoff: CUTOFF,
-          scaleInvariant: command.scaleInvariant,
-          scaleInvariantSize: command.scaleInvariantSize,
-          isHitmap: !!isHitmap,
-          viewportHeight: regl.context("viewportHeight"),
-          viewportWidth: regl.context("viewportWidth"),
-          isPerspective: regl.context("isPerspective"),
-          cameraFovY: regl.context("fovy"),
-        },
-        instances: regl.prop("instances"),
-        count: 4,
-        attributes: {
-          position: [[0, 0], [0, -1], [1, 0], [1, -1]],
-          texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
-          srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
-          destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
-          srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
-          scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
-          alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
-          billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
-          foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
-          backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
-          highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
-          enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
-          enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
-          posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
-          poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
-        },
-      });
-    };
+
+    const drawText = regl({
+      // When using scale invariance, we want the text to be drawn on top
+      // of other elements. This is achieved by disabling depth testing
+      // In addition, make sure the <GLText /> command is the last one
+      // being rendered.
+      depth: {
+        enable: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.enable(ctx, props)),
+        mask: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.mask(ctx, props)),
+      },
+      blend: defaultBlend,
+      primitive: "triangle strip",
+      vert,
+      frag,
+      uniforms: {
+        atlas: atlasTexture,
+        atlasSize: () => [atlasTexture.width, atlasTexture.height],
+        fontSize: regl.prop("resolution"),
+        cutoff: CUTOFF,
+        scaleInvariant: regl.prop("scaleInvariant"),
+        scaleInvariantSize: regl.prop("scaleInvariantSize"),
+        isHitmap: regl.prop("isHitmap"),
+        viewportHeight: regl.context("viewportHeight"),
+        viewportWidth: regl.context("viewportWidth"),
+        isPerspective: regl.context("isPerspective"),
+        cameraFovY: regl.context("fovy"),
+      },
+      instances: regl.prop("instances"),
+      count: 4,
+      attributes: {
+        position: [[0, 0], [0, -1], [1, 0], [1, -1]],
+        texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
+        srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
+        destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
+        srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
+        scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
+        alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
+        billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
+        foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
+        backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
+        highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
+        enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
+        enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
+        posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
+        poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
+      },
+    });
 
     return (props: $ReadOnlyArray<TextMarkerProps>, isHitmap: boolean) => {
       let estimatedInstances = 0;
-      const prevNumChars = charSet.size;
       for (const { text } of props) {
         if (typeof text !== "string") {
           throw new Error(`Expected typeof 'text' to be a string. But got type '${typeof text}' instead.`);
@@ -368,28 +378,10 @@ function makeTextCommand(alphabet?: string[]) {
           charSet.add(char);
         }
       }
-      const charsChanged = !charSetInitialized || charSet.size !== prevNumChars;
-
-      const { textureData, textureWidth, textureHeight, charInfo } = memoizedBuildAtlas(
-        // only use a new set if the characters changed, since memoizeOne uses shallow equality
-        charsChanged ? new Set(charSet) : charSet,
-        command.resolution
-      );
-
-      charSetInitialized = true;
-
-      // re-upload texture only if characters were added
-      if (charsChanged) {
-        atlasTexture({
-          data: textureData,
-          width: textureWidth,
-          height: textureHeight,
-          format: "alpha",
-          wrap: "clamp",
-          mag: "linear",
-          min: "linear",
-        });
-      }
+      // See http://webglstats.com/webgl/parameter/MAX_TEXTURE_SIZE - everyone has at least min 2048 texture size, and
+      // almost everyone has at least 4096. With a 2048 width we have ~900 height with a full character set.
+      const maxAtlasWidth: number = regl.limits.maxTextureSize || 2048;
+      const charInfo = memoizedBuildAtlas(charSet, charSet.size, command.resolution, atlasTexture, maxAtlasWidth);
 
       const destOffsets = new Float32Array(estimatedInstances * 2);
       const srcWidths = new Float32Array(estimatedInstances);
@@ -515,8 +507,13 @@ function makeTextCommand(alphabet?: string[]) {
         totalInstances += markerInstances;
       }
 
-      makeDrawText(isHitmap)({
+      drawText({
         instances: totalInstances,
+
+        isHitmap: !!isHitmap,
+        scaleInvariant: command.scaleInvariant,
+        resolution: command.resolution,
+        scaleInvariantSize: command.scaleInvariantSize,
 
         // per-character
         srcOffsets,
