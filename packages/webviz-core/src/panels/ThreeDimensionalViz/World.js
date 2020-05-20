@@ -30,6 +30,7 @@ import {
   OccupancyGrids,
   LaserScans,
   PointClouds,
+  GPUPointClouds,
   PoseMarkers,
   LinedConvexHulls,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands";
@@ -73,6 +74,15 @@ function getMarkers(markerProviders: MarkerProvider[]) {
 
   return markers;
 }
+
+// Generate an alphabet for text makers with the most
+// used ASCII characters to prevent recreating the texture
+// atlas too many times for dynamic texts.
+const ALPHABET = (() => {
+  const start = 32; // SPACE
+  const end = 125; // "}"
+  return new Array(end - start + 1).fill().map((_, i) => String.fromCodePoint(start + i));
+})();
 
 export default function World({
   onClick,
@@ -133,12 +143,19 @@ export default function World({
     searchTextMatches,
   });
 
+  const gpuPointCloudsEnabled = useExperimentalFeature("gpuPointCloud");
+  const PointCloudsComponent = gpuPointCloudsEnabled ? GPUPointClouds : PointClouds;
+
   return (
     <Worldview
       cameraState={cameraState}
       enableStackedObjectEvents={!isPlaying}
       hideDebug={inScreenshotTests()}
       onCameraStateChange={onCameraStateChange}
+      // Rendering the hitmap is an expensive operation and we want to avoid
+      // doing it when the user is dragging the view with the mouse. By ignoring
+      // these events, the only way to select an object is when receiving an "onClick" event.
+      disableHitmapForEvents={["onMouseDown", "onMouseMove", "onMouseUp"]}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
@@ -150,14 +167,20 @@ export default function World({
       <Lines>{[...lineList, ...lineStrip]}</Lines>
       <Arrows>{arrow}</Arrows>
       <Points>{points}</Points>
-      <PointClouds>{pointcloud}</PointClouds>
+      <PointCloudsComponent>{pointcloud}</PointCloudsComponent>
       <Triangles>{triangleList}</Triangles>
       <Spheres>{[...sphere, ...sphereList]}</Spheres>
       <Cylinders>{cylinder}</Cylinders>
       <Cubes>{[...cube, ...cubeList]}</Cubes>
       <PoseMarkers>{poseMarker}</PoseMarkers>
       <LaserScans>{laserScan}</LaserScans>
-      <TextComponent autoBackgroundColor={autoTextBackgroundColor}>{textMarkers}</TextComponent>
+      <TextComponent
+        layerIndex={10}
+        alphabet={ALPHABET}
+        scaleInvariantFontSize={14}
+        autoBackgroundColor={autoTextBackgroundColor}>
+        {textMarkers}
+      </TextComponent>
       <FilledPolygons>{filledPolygon}</FilledPolygons>
       <Lines getChildrenForHitmap={getChildrenForHitmap}>{instancedLineList}</Lines>
       <LinedConvexHulls>{linedConvexHull}</LinedConvexHulls>

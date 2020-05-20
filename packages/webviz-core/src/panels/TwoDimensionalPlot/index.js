@@ -5,12 +5,11 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { cloneDeep, flatten, pick, round } from "lodash";
-import React, { useMemo, useCallback } from "react";
-// For now, we are relying on the old react-chartjs package but we should switch this file to rely on our internal
-// ReactChartjs for performance reasons.
-import ChartComponent from "react-chartjs-2";
+import { flatten, pick, round } from "lodash";
+import React, { useMemo, useCallback, useRef, useEffect } from "react";
 import Dimensions from "react-container-dimensions";
+import DocumentEvents from "react-document-events";
+import ReactDOM from "react-dom";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
@@ -23,6 +22,8 @@ import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/Messa
 import { useLatestMessageDataItem } from "webviz-core/src/components/MessagePathSyntax/useLatestMessageDataItem";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import ChartComponent from "webviz-core/src/components/ReactChartjs";
+import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SContainer = styled.div`
@@ -78,7 +79,6 @@ export type Line = {
   data: { x: number, y: number }[],
 };
 type PlotMessage = {
-  type: "webviz_msgs/2DPlotMsg",
   lines: Line[],
   points: Line[],
   polygons: Line[],
@@ -91,6 +91,9 @@ function TwoDimensionalPlot(props: Props) {
     config: { path, minXVal, maxXVal, minYVal, maxYVal },
     saveConfig,
   } = props;
+
+  const tooltip = useRef<?HTMLDivElement>(null);
+  const chartComponent = useRef<?ChartComponent>(null);
 
   const menuContent = useMemo(
     () => (
@@ -158,27 +161,161 @@ function TwoDimensionalPlot(props: Props) {
     };
   }, []);
 
+  const removeTooltip = useCallback(() => {
+    if (tooltip.current) {
+      ReactDOM.unmountComponentAtNode(tooltip.current);
+    }
+    if (tooltip.current && tooltip.current.parentNode) {
+      // Satisfy flow.
+      tooltip.current.parentNode.removeChild(tooltip.current);
+      tooltip.current = null;
+    }
+  }, []);
+
+  // Always clean up tooltips when unmounting.
+  useEffect(
+    () => {
+      return () => {
+        removeTooltip();
+      };
+    },
+    [removeTooltip]
+  );
+
   const item = useLatestMessageDataItem(path.value);
   const message: PlotMessage = (item?.queriedData[0]?.value: any);
+  const { title, yAxisLabel, xAxisLabel, lines = [], points = [], polygons = [] } = message || {};
+  const data = useMemo(
+    () =>
+      message
+        ? {
+            datasets: [
+              ...lines.map((line, idx) => ({ ...pick(line, keysToPick), showLine: true, fill: false })),
+              ...points.map((point, idx) => pick(point, keysToPick)),
+              ...polygons.map((polygon, idx) => ({
+                ...pick(polygon, keysToPick),
+                data: polygon.data[0] ? polygon.data.concat([polygon.data[0]]) : polygon.data,
+                fill: true,
+                pointRadius: 0,
+                showLine: true,
+                lineTension: 0,
+              })),
+            ].sort((a, b) => (b.order || 0) - (a.order || 0)),
+          }
+        : { datasets: [] },
+    [lines, message, points, polygons]
+  );
 
-  const currentData = message && message.type === "webviz_msgs/2DPlotMsg" ? message : null;
-  const { title, yAxisLabel, xAxisLabel, lines = [], points = [], polygons = [] } = currentData || {};
-  const datasets = currentData
-    ? [
-        ...lines.map((line, idx) => ({ ...pick(line, keysToPick), showLine: true, fill: false })),
-        ...points.map((point, idx) => pick(point, keysToPick)),
-        ...polygons.map((polygon, idx) => ({
-          ...pick(polygon, keysToPick),
-          data: polygon.data[0] ? polygon.data.concat([polygon.data[0]]) : polygon.data,
-          fill: true,
-          pointRadius: 0,
-          showLine: true,
-          lineTension: 0,
-        })),
-      ].sort((a, b) => (b.order || 0) - (a.order || 0))
-    : [];
-  const allXs = flatten(datasets.map((dataset) => (dataset.data ? dataset.data.map(({ x }) => x) : [])));
-  const allYs = flatten(datasets.map((dataset) => (dataset.data ? dataset.data.map(({ y }) => y) : [])));
+  const { allXs, allYs } = useMemo(
+    () => ({
+      allXs: flatten(data.datasets.map((dataset) => (dataset.data ? dataset.data.map(({ x }) => x) : []))),
+      allYs: flatten(data.datasets.map((dataset) => (dataset.data ? dataset.data.map(({ y }) => y) : []))),
+    }),
+    [data.datasets]
+  );
+
+  const options = useMemo(
+    () => ({
+      title: { display: !!title, text: title },
+      scales: {
+        yAxes: [
+          {
+            scaleLabel: { display: !!yAxisLabel, labelString: yAxisLabel },
+            ticks: {
+              min: parseFloat(minYVal) ? parseFloat(minYVal) : getBufferedMinMax(allYs).min,
+              max: parseFloat(maxYVal) ? parseFloat(maxYVal) : getBufferedMinMax(allYs).max,
+            },
+          },
+        ],
+        xAxes: [
+          {
+            scaleLabel: { display: !!xAxisLabel, labelString: xAxisLabel },
+            ticks: {
+              min: parseFloat(minXVal) ? parseFloat(minXVal) : getBufferedMinMax(allXs).min,
+              max: parseFloat(maxXVal) ? parseFloat(maxXVal) : getBufferedMinMax(allXs).max,
+            },
+          },
+        ],
+      },
+      color: colors.GRAY,
+      animation: { duration: 0 },
+      legend: { display: false },
+      pan: { enabled: false },
+      zoom: { enabled: false },
+      plugins: {},
+    }),
+    [allXs, allYs, getBufferedMinMax, maxXVal, maxYVal, minXVal, minYVal, title, xAxisLabel, yAxisLabel]
+  );
+
+  const onMouseMove = useCallback(
+    async (event: MouseEvent) => {
+      const currentChartComponent = chartComponent.current;
+      if (!currentChartComponent || !currentChartComponent.canvas) {
+        removeTooltip();
+        return;
+      }
+      const { canvas } = currentChartComponent;
+      const canvasRect = canvas.getBoundingClientRect();
+      const isTargetingCanvas = event.target === canvas;
+      if (
+        event.pageX < canvasRect.left ||
+        event.pageX > canvasRect.right ||
+        event.pageY < canvasRect.top ||
+        event.pageY > canvasRect.bottom ||
+        !isTargetingCanvas
+      ) {
+        removeTooltip();
+        return;
+      }
+
+      const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
+      if (!tooltipElement) {
+        removeTooltip();
+        return;
+      }
+      let tooltipDatapoint, tooltipLabel;
+      for (const { data: dataPoints, label } of data.datasets) {
+        const datapoint = dataPoints.find(
+          (_datapoint) =>
+            _datapoint.x === tooltipElement.data.x && String(_datapoint.y) === String(tooltipElement.data.y)
+        );
+        if (datapoint) {
+          tooltipDatapoint = datapoint;
+          tooltipLabel = label;
+          break;
+        }
+      }
+      if (!tooltipDatapoint) {
+        removeTooltip();
+        return;
+      }
+
+      if (!tooltip.current) {
+        tooltip.current = document.createElement("div");
+        if (canvas.parentNode) {
+          canvas.parentNode.appendChild(tooltip.current);
+        }
+      }
+
+      const currentTooltip = tooltip.current;
+      if (currentTooltip) {
+        let label = tooltipLabel ? `${tooltipLabel}: ` : "";
+        label += `(${round(tooltipDatapoint.x, 5)}, ${round(tooltipDatapoint.y, 5)})`;
+        ReactDOM.render(
+          <div
+            className={tooltipStyles.tooltip}
+            style={{ position: "absolute", left: tooltipElement.view.x, top: tooltipElement.view.y }}>
+            {label}
+          </div>,
+          currentTooltip
+        );
+      }
+    },
+    [data.datasets, removeTooltip]
+  );
+
+  const emptyMessage = !points.length && !lines.length && !polygons.length;
+
   return (
     <SContainer>
       <PanelToolbar helpContent={helpContent} menuContent={menuContent}>
@@ -187,69 +324,30 @@ function TwoDimensionalPlot(props: Props) {
           onChange={(newValue) => saveConfig({ path: { value: newValue } })}
           inputStyle={{ height: "100%" }}
           validTypes={VALID_TYPES}
-          placeholder='Select topic messages with a "type" of "webviz_msgs/2DPlotMsg"'
+          placeholder="Select topic messages with 2D Plot data to visualize"
           autoSize
         />
       </PanelToolbar>
       {!message ? (
-        <EmptyState>No 2D Plot messages found</EmptyState>
+        <EmptyState>Waiting for next message</EmptyState>
+      ) : emptyMessage ? (
+        <EmptyState>No 2D Plot data (lines, points, polygons) to visualize</EmptyState>
       ) : (
         <SRoot>
           <Dimensions>
             {({ width, height }) => (
               <ChartComponent
+                ref={chartComponent}
                 type="scatter"
                 width={width}
                 height={height}
                 key={`${width}x${height}`}
-                options={{
-                  title: { display: !!title, text: title },
-                  scales: {
-                    yAxes: [
-                      {
-                        scaleLabel: { display: !!yAxisLabel, labelString: yAxisLabel },
-                        ticks: {
-                          min: parseFloat(minYVal) ? parseFloat(minYVal) : getBufferedMinMax(allYs).min,
-                          max: parseFloat(maxYVal) ? parseFloat(maxYVal) : getBufferedMinMax(allYs).max,
-                        },
-                      },
-                    ],
-                    xAxes: [
-                      {
-                        scaleLabel: { display: !!xAxisLabel, labelString: xAxisLabel },
-                        ticks: {
-                          min: parseFloat(minXVal) ? parseFloat(minXVal) : getBufferedMinMax(allXs).min,
-                          max: parseFloat(maxXVal) ? parseFloat(maxXVal) : getBufferedMinMax(allXs).max,
-                        },
-                      },
-                    ],
-                  },
-                  color: colors.GRAY,
-                  animation: { duration: 0 },
-                  legend: { display: false },
-                  pan: { enabled: false },
-                  zoom: { enabled: false },
-                  tooltips: {
-                    callbacks: {
-                      label(tooltipItem, data) {
-                        let label = data.datasets[tooltipItem.datasetIndex].label || "";
-                        if (label) {
-                          label += ": ";
-                        }
-                        label += `(${round(tooltipItem.xLabel, 5)}, ${round(tooltipItem.yLabel, 5)})`;
-                        return label;
-                      },
-                    },
-                  },
-                }}
-                // Sadly, chartjs mutates its inputs. This can lead to weird bugs, so just do
-                // a deep clone, even if that means it's slower.
-                // See https://github.com/jerairrest/react-chartjs-2/issues/250
-                // https://github.com/jerairrest/react-chartjs-2/issues/343 etc.
-                data={{ datasets: cloneDeep(datasets) }}
+                options={options}
+                data={data}
               />
             )}
           </Dimensions>
+          <DocumentEvents capture onMouseDown={onMouseMove} onMouseUp={onMouseMove} onMouseMove={onMouseMove} />
         </SRoot>
       )}
     </SContainer>

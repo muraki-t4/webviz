@@ -7,19 +7,18 @@
 //  You may not use this file except in compliance with the License.
 
 import PlusBoxIcon from "@mdi/svg/svg/plus-box.svg";
-import { isEmpty } from "lodash";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 
-import { changePanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
+import { changePanelLayout, savePanelConfigs } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
-import PanelList from "webviz-core/src/panels/PanelList";
+import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import type { State as ReduxState } from "webviz-core/src/reducers";
 import type { PanelsState } from "webviz-core/src/reducers/panels";
-import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
-import { getPanelIdForType } from "webviz-core/src/util";
+import type { ChangePanelLayoutPayload, SaveConfigsPayload } from "webviz-core/src/types/panels";
+import { selectPanelOutput } from "webviz-core/src/util/layout";
 
 type OwnProps = {|
   defaultIsOpen?: boolean, // just for testing
@@ -28,8 +27,8 @@ type OwnProps = {|
 type Props = {|
   ...OwnProps,
   panels: PanelsState,
-  changePanelLayout: (panelLayout: any) => void,
-  savePanelConfig: (SaveConfigPayload) => void,
+  changePanelLayout: (payload: ChangePanelLayoutPayload) => void,
+  savePanelConfigs: (SaveConfigsPayload) => void,
 |};
 
 type State = {| isOpen: boolean |};
@@ -49,21 +48,15 @@ class UnconnectedAppMenu extends Component<Props, State> {
     this.setState({ isOpen: !isOpen });
   };
 
-  _onPanelSelect = (panelType: string, panelConfig?: PanelConfig) => {
-    const id = getPanelIdForType(panelType);
-    let newPanels = {
-      direction: "row",
-      first: id,
-      second: this.props.panels.layout,
-    };
-    if (isEmpty(this.props.panels.layout)) {
-      newPanels = id;
-    }
-    if (panelConfig) {
-      this.props.savePanelConfig({ id, config: panelConfig, defaultConfig: {} });
-    }
-    this.props.changePanelLayout(newPanels);
-    window.ga("send", "event", "Panel", "Select", panelType);
+  _onPanelSelect = ({ type, config, relatedConfigs }: PanelSelection) => {
+    const { panels } = this.props;
+    const { changePanelPayload, saveConfigsPayload } = selectPanelOutput(type, panels.layout, {
+      config,
+      relatedConfigs,
+    });
+    this.props.changePanelLayout(changePanelPayload);
+    this.props.savePanelConfigs(saveConfigsPayload);
+    window.ga("send", "event", "Panel", "Select", type);
   };
 
   render() {
@@ -76,7 +69,6 @@ class UnconnectedAppMenu extends Component<Props, State> {
           </Icon>
         </div>
         <Menu>
-          {/* $FlowFixMe - not sure why it thinks onPanelSelect is a Redux action */}
           <PanelList onPanelSelect={this._onPanelSelect} />
         </Menu>
       </ChildToggle>
@@ -88,5 +80,5 @@ export default connect<Props, OwnProps, _, _, _, _>(
   (state: ReduxState) => ({
     panels: state.panels,
   }),
-  { changePanelLayout, savePanelConfig }
+  { changePanelLayout, savePanelConfigs }
 )(UnconnectedAppMenu);

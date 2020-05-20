@@ -16,6 +16,7 @@ let importedPanelsByCategory;
 let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
+  getEventLogger: () => undefined,
   async importHooksAsync() {
     return new Promise((resolve, reject) => {
       if (importedPanelsByCategory && importedPerPanelHooks) {
@@ -36,6 +37,7 @@ const defaultHooks = {
   nodes: () => [],
   getDefaultGlobalStates() {
     const { defaultPlaybackConfig } = require("webviz-core/src/reducers/panels");
+    const { CURRENT_LAYOUT_VERSION } = require("webviz-core/migrations/constants");
     return {
       layout: {
         direction: "row",
@@ -53,10 +55,11 @@ const defaultHooks = {
       userNodes: {},
       linkedGlobalVariables: [],
       playbackConfig: defaultPlaybackConfig,
+      version: CURRENT_LAYOUT_VERSION,
     };
   },
   migratePanels(panels) {
-    const migratePanels = require("webviz-core/src/util/migratePanels").default;
+    const migratePanels = require("webviz-core/migrations").default;
     return migratePanels(panels);
   },
   panelCategories() {
@@ -86,10 +89,18 @@ const defaultHooks = {
         getDefaultTopicSettingsByColumn(topicName) {
           return undefined;
         },
+        getDefaultSettings: () => ({}),
         getDefaultTopicTree: () => ({
           name: "root",
           children: [{ name: "TF", children: [], description: "Visualize relationships between /tf frames." }],
         }),
+        getDefaultTopicTreeV2: () => ({
+          name: "root",
+          children: [
+            { name: "TF", topic: "/tf", children: [], description: "Visualize relationships between /tf frames." },
+          ],
+        }),
+        getStaticallyAvailableNamespacesByTopic: () => ({}),
       },
     };
   },
@@ -113,13 +124,6 @@ const defaultHooks = {
   getAdditionalDataProviders: () => {},
   experimentalFeaturesList() {
     return {
-      plotWebWorker: {
-        name: "Use a web worker to render the Plot panel",
-        description:
-          "Experimentally render the plot panel using a web worker. This should result in increased performance.",
-        developmentDefault: false,
-        productionDefault: false,
-      },
       diskBagCaching: {
         name: "Disk Bag Caching (requires reload)",
         description:

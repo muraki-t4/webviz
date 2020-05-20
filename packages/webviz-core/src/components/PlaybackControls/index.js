@@ -12,7 +12,6 @@ import PauseIcon from "@mdi/svg/svg/pause.svg";
 import PlayIcon from "@mdi/svg/svg/play.svg";
 import classnames from "classnames";
 import React, { useCallback } from "react";
-import KeyListener from "react-key-listener";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 
@@ -21,7 +20,10 @@ import { ProgressPlot } from "./ProgressPlot";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
+import KeyListener from "webviz-core/src/components/KeyListener";
+import MessageOrderControls from "webviz-core/src/components/MessageOrderControls";
 import { MessagePipelineConsumer } from "webviz-core/src/components/MessagePipeline";
+import { togglePlayPause, jumpSeek, DIRECTION } from "webviz-core/src/components/PlaybackControls/sharedHelpers";
 import PlaybackSpeedControls from "webviz-core/src/components/PlaybackSpeedControls";
 import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
@@ -38,19 +40,19 @@ const StyledFullWidthBar = styled.div`
   height: 5px;
 `;
 
-const StyledMarker = styled.div.attrs({
-  style: ({ width = 0 }) => ({ left: `calc(${width * 100}% - 2px)` }),
-})`
+const StyledMarker = styled.div`
   background-color: white;
   position: absolute;
   height: 36%;
   border: 1px solid ${colors.divider};
   width: 3px;
   top: 32%;
+  left: calc(${(props) => 100 * (props.width || 0)}% - 2px);
 `;
 
-type Props = {|
+export type PlaybackControlProps = {|
   player: PlayerState,
+  auxiliaryData?: any,
   pause: () => void,
   play: () => void,
   seek: (Time) => void,
@@ -63,7 +65,7 @@ const TooltipItem = ({ title, value }) => (
   </div>
 );
 
-export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
+export class UnconnectedPlaybackControls extends React.PureComponent<PlaybackControlProps> {
   el: ?HTMLDivElement;
   slider: ?Slider;
 
@@ -73,16 +75,21 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
     seek(time);
   };
 
-  keyDownHandlers = {
-    " ": () => {
-      const { pause, play, player } = this.props;
-
-      if (player.activeData && player.activeData.isPlaying) {
+  seek(newTime: Time) {
+    const { seek, player, pause } = this.props;
+    const { activeData } = player;
+    if (activeData) {
+      if (activeData.isPlaying) {
         pause();
-      } else {
-        play();
       }
-    },
+      seek(newTime);
+    }
+  }
+
+  keyDownHandlers = {
+    " ": () => togglePlayPause(this.props),
+    ArrowLeft: (ev: KeyboardEvent) => jumpSeek(DIRECTION.BACKWARD, ev, this.props),
+    ArrowRight: (ev: KeyboardEvent) => jumpSeek(DIRECTION.FORWARD, ev, this.props),
   };
 
   onMouseMove = (e: SyntheticMouseEvent<HTMLDivElement>) => {
@@ -163,6 +170,7 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
         <div>
           <PlaybackSpeedControls />
         </div>
+        <MessageOrderControls />
 
         <div className={styles.bar}>
           <StyledFullWidthBar />

@@ -22,7 +22,7 @@ import {
 import { buildMarkerData, type Dimensions, type RawMarkerData, type MarkerData, type OffscreenCanvas } from "./util";
 import type { Message } from "webviz-core/src/players/types";
 import type { ImageMarker, Color, Point } from "webviz-core/src/types/Messages";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 // Just globally keep track of if we've shown an error in rendering, since typically when you get
 // one error, you'd then get a whole bunch more, which is spammy.
@@ -35,13 +35,11 @@ export async function renderImage({
   imageMessage,
   rawMarkerData,
   imageMarkerDatatypes,
-  imageMarkerArrayDatatypes,
 }: {
   canvas: ?(HTMLCanvasElement | OffscreenCanvas),
   imageMessage: any,
   rawMarkerData: RawMarkerData,
   imageMarkerDatatypes: string[],
-  imageMarkerArrayDatatypes: string[],
 }): Promise<?Dimensions> {
   if (!canvas) {
     return null;
@@ -55,14 +53,14 @@ export async function renderImage({
     markerData = buildMarkerData(rawMarkerData);
   } catch (error) {
     if (!hasLoggedCameraModelError) {
-      reportError(`Failed to initialize camera model from CameraInfo`, error, "user");
+      sendNotification(`Failed to initialize camera model from CameraInfo`, error, "user", "warn");
       hasLoggedCameraModelError = true;
     }
   }
 
   try {
     const bitmap = await decodeMessageToBitmap(imageMessage);
-    const dimensions = paintBitmap(canvas, bitmap, markerData, imageMarkerDatatypes, imageMarkerArrayDatatypes);
+    const dimensions = paintBitmap(canvas, bitmap, markerData, imageMarkerDatatypes);
     bitmap.close();
     return dimensions;
   } catch (error) {
@@ -77,7 +75,8 @@ function toRGBA(color: Color) {
   return `rgba(${r}, ${g}, ${b}, ${a || 1})`;
 }
 
-function maybeUnrectifyPoint(cameraModel: ?CameraModel, point: Point): { x: number, y: number } {
+// Note: Return type is inexact -- may contain z.
+function maybeUnrectifyPoint(cameraModel: ?CameraModel, point: Point): $ReadOnly<{ x: number, y: number }> {
   if (cameraModel) {
     return cameraModel.unrectifyPoint(point);
   }
@@ -133,8 +132,7 @@ function paintBitmap(
   canvas: HTMLCanvasElement,
   bitmap: ImageBitmap,
   markerData: MarkerData,
-  imageMarkerDatatypes: string[],
-  imageMarkerArrayDatatypes: string[]
+  imageMarkerDatatypes: string[]
 ): ?Dimensions {
   let bitmapDimensions = { width: bitmap.width, height: bitmap.height };
   const ctx = canvas.getContext("2d");
@@ -162,7 +160,7 @@ function paintBitmap(
   ctx.restore();
   ctx.save();
   try {
-    paintMarkers(ctx, markers, cameraModel, imageMarkerDatatypes, imageMarkerArrayDatatypes);
+    paintMarkers(ctx, markers, cameraModel, imageMarkerDatatypes);
   } catch (err) {
     console.warn("error painting markers:", err);
   } finally {
@@ -173,21 +171,22 @@ function paintBitmap(
 
 function paintMarkers(
   ctx: CanvasRenderingContext2D,
-  markers: Message[],
+  messages: Message[],
   cameraModel: ?CameraModel,
-  imageMarkerDatatypes: string[],
-  imageMarkerArrayDatatypes: string[]
+  imageMarkerDatatypes: string[]
 ) {
-  for (const msg of markers) {
+  for (const { message } of messages) {
     ctx.save();
-    if (imageMarkerArrayDatatypes.includes(msg.datatype)) {
-      for (const marker of msg.message.markers) {
-        paintMarker(ctx, marker, cameraModel);
+    try {
+      if (Array.isArray(message.markers)) {
+        for (const marker of message.markers) {
+          paintMarker(ctx, marker, cameraModel);
+        }
+      } else {
+        paintMarker(ctx, message, cameraModel);
       }
-    } else if (imageMarkerDatatypes.includes(msg.datatype)) {
-      paintMarker(ctx, msg.message, cameraModel);
-    } else {
-      console.warn("unrecognized image marker datatype", msg);
+    } catch (e) {
+      console.error("Unable to paint marker to ImageView", e, message);
     }
     ctx.restore();
   }
