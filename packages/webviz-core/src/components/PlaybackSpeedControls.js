@@ -18,7 +18,7 @@ import { useDataSourceInfo } from "webviz-core/src/PanelAPI";
 import { PlayerCapabilities } from "webviz-core/src/players/types";
 import { ndash, times } from "webviz-core/src/util/entities";
 
-const SPEEDS = ["0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "0.8", "1.0", "5.0"];
+const SPEEDS = ["0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "0.8", "1.0", "2.0"];
 const BUTTON_STYLE = {
   display: "flex",
   alignItems: "center",
