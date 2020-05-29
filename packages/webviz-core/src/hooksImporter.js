@@ -17,7 +17,8 @@ lazily importing this file at runtime.
 */
 
 export function panelsByCategory() {
-  const AIDrivingInstructor = require("webviz-core/src/panels/AIDrivingInstructor").default;
+  const AIDrivingInstructor = require("webviz-core/src/panels/AIDrivingInstructor/Instructor").default;
+  const AIDrivingScenarioEditor = require("webviz-core/src/panels/AIDrivingInstructor/ScenarioEditor").default;
   const DiagnosticStatusPanel = require("webviz-core/src/panels/diagnostics/DiagnosticStatusPanel").default;
   const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
   const GlobalVariables = require("webviz-core/src/panels/GlobalVariables").default;
@@ -67,7 +68,10 @@ export function panelsByCategory() {
     { title: "Subscribe to List", component: SubscribeToList },
   ];
 
-  const tier4 = [{ title: "AI Driving Instructor", component: AIDrivingInstructor }];
+  const tier4 = [
+    { title: "AI Instructor", component: AIDrivingInstructor },
+    { title: "Scenario Editor", component: AIDrivingScenarioEditor },
+  ];
 
   return { ros, utilities, debugging, tier4 };
 }

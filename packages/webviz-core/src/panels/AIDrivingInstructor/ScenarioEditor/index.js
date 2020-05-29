@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 //
-import AiInstructorPanelWrapperForRoslib from "ai-instructor-panel";
+import { ScenarioEditorPanel } from "ai-instructor-panel";
 import { partition } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
@@ -19,7 +19,6 @@ import { memoizedGetLinkedGlobalVariablesKeyByName } from "webviz-core/src/panel
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
-// AI Instructor Panel
 const Container = styled.div`
   padding: 16px;
   overflow-y: auto;
@@ -40,7 +39,7 @@ const Container = styled.div`
   }
 `;
 
-function AIDrivingInstructorPanel(): React.Node {
+function ScenarioEditor(): React.Node {
   const { globalVariables, _0, _1 } = useGlobalVariables();
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const globalVariableNames = Object.keys(globalVariables);
@@ -53,7 +52,7 @@ function AIDrivingInstructorPanel(): React.Node {
   return (
     <Container>
       <PanelToolbar floating />
-      <AiInstructorPanelWrapperForRoslib websocketUrl={websocketUrl} clickedWaypointId={globalVariables.clickedWaypointId}/>
+      <ScenarioEditorPanel websocketUrl={websocketUrl} clickedWaypointId={globalVariables.clickedWaypointId}/>
       <br />
       <br />
       <br />
@@ -85,7 +84,7 @@ function AIDrivingInstructorPanel(): React.Node {
   );
 }
 
-AIDrivingInstructorPanel.panelType = "AIDrivingInstructorPanel";
-AIDrivingInstructorPanel.defaultConfig = {};
+ScenarioEditor.panelType = "ScenarioEditor";
+ScenarioEditor.defaultConfig = {};
 
-export default hot(Panel<{}>(AIDrivingInstructorPanel));
+export default hot(Panel<{}>(ScenarioEditor));
