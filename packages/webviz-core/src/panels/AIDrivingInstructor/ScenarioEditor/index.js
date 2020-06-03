@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 //
 import { ScenarioEditorPanel } from "ai-instructor-panel";
-import { partition } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
@@ -15,8 +14,6 @@ import styled from "styled-components";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
-import { memoizedGetLinkedGlobalVariablesKeyByName } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/interactionUtils";
-import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
 const Container = styled.div`
@@ -41,45 +38,13 @@ const Container = styled.div`
 
 function ScenarioEditor(): React.Node {
   const { globalVariables, _0, _1 } = useGlobalVariables();
-  const { linkedGlobalVariables } = useLinkedGlobalVariables();
-  const globalVariableNames = Object.keys(globalVariables);
-  const linkedGlobalVariablesKeyByName = memoizedGetLinkedGlobalVariablesKeyByName(linkedGlobalVariables);
-  const [linked, unlinked] = partition(globalVariableNames, (name) => !!linkedGlobalVariablesKeyByName[name]);
-
   const params = new URLSearchParams(window.location.search);
   const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
 
   return (
     <Container>
       <PanelToolbar floating />
-      <ScenarioEditorPanel websocketUrl={websocketUrl} clickedWaypointId={globalVariables.clickedWaypointId}/>
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-      <p>(DEBUG) Global variables are shown below.</p>
-      {linked.map((name, idx) => {
-        return (
-          <tr key={`linked-${idx}`}>
-            <a>
-              {name}: {JSON.stringify(globalVariables[name] ?? "")}
-            </a>
-          </tr>
-        );
-      })}
-      {unlinked.map((name, idx) => {
-        return (
-          <tr key={`unlinked-${idx}`}>
-            <a>
-              {name}: {JSON.stringify(globalVariables[name] ?? "")}
-            </a>
-          </tr>
-        );
-      })}
+      <ScenarioEditorPanel websocketUrl={websocketUrl} clickedWaypointId={globalVariables.clickedWaypointId} />
     </Container>
   );
 }
