@@ -13,6 +13,7 @@ import styled from "styled-components";
 
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import { ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
 const Container = styled.div`
@@ -36,13 +37,22 @@ const Container = styled.div`
 `;
 
 function Instructor(): React.Node {
+  const { globalVariables, setGlobalVariables, _ } = useGlobalVariables();
   const params = new URLSearchParams(window.location.search);
   const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
+
+  const setClickedCheckpointId = (newId) => {
+    setGlobalVariables({ ["clickedCheckpointId"]: newId });
+  };
 
   return (
     <Container>
       <PanelToolbar floating />
-      <ShowResultsPanel websocketUrl={websocketUrl} />
+      <ShowResultsPanel
+        websocketUrl={websocketUrl}
+        clickedCheckpointId={globalVariables.clickedCheckpointId}
+        setClickedCheckpointId={setClickedCheckpointId}
+      />
     </Container>
   );
 }
