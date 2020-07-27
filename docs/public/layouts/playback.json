@@ -1,0 +1,102 @@
+{
+  "layout": "Tab!2ok5p91",
+  "savedProps": {
+    "3D Panel!331qevd": {
+      "checkedKeys": [
+        "name:Topics",
+        "t:/vector_map",
+        "ns:/checkpoint_handler/markers:checkpoints",
+        "t:/checkpoint_handler/markers",
+        "ns:/checkpoint_handler/markers:checkpoint_id",
+        "t:/waypoints_publisher/markers",
+        "name:Topic",
+        "name:(Uncategorized)",
+        "t:/ego_vehicle"
+      ],
+      "expandedKeys": [
+        "name:(Uncategorized)"
+      ],
+      "followTf": "base_link",
+      "cameraState": {
+        "targetOffset": [
+          2.631652742705007,
+          1.7579856538033192,
+          0
+        ],
+        "distance": 39.382831184358814,
+        "perspective": false,
+        "phi": 0,
+        "thetaOffset": 2.4223400490639873,
+        "fovy": 0.7853981633974483,
+        "near": 0.01,
+        "far": 5000
+      },
+      "modifiedNamespaceTopics": [
+        "/checkpoint_handler/markers"
+      ],
+      "pinTopics": false,
+      "topicSettings": {
+        "/ego_vehicle": {
+          "useCarModel": true
+        }
+      },
+      "autoSyncCameraState": false,
+      "settingsByKey": {
+        "t:/ego_vehicle": {
+          "useCarModel": true
+        },
+        "t:/points_raw": {
+          "colorMode": {
+            "mode": "rainbow",
+            "colorField": "intensity"
+          }
+        },
+        "t:/points_map": {
+          "pointSize": 1
+        }
+      },
+      "topicDisplayMode": "SHOW_ALL",
+      "disableAutoOpenClickedObject": true
+    },
+    "Tab!2ok5p91": {
+      "activeTabIdx": 0,
+      "tabs": [
+        {
+          "title": "Playback",
+          "layout": {
+            "first": "3D Panel!331qevd",
+            "second": "Instructor!4e9xvi3",
+            "direction": "row",
+            "splitPercentage": 73.85197190707726
+          }
+        }
+      ]
+    }
+  },
+  "globalVariables": {
+    "clickedWaypointId": 19,
+    "clickedCheckpointId": null
+  },
+  "userNodes": {},
+  "linkedGlobalVariables": [
+    {
+      "topic": "/waypoints_publisher/markers",
+      "markerKeyPath": [
+        "id"
+      ],
+      "name": "clickedWaypointId"
+    },
+    {
+      "topic": "/checkpoint_handler/markers",
+      "markerKeyPath": [
+        "id"
+      ],
+      "name": "clickedCheckpointId"
+    }
+  ],
+  "playbackConfig": {
+    "speed": 0.2,
+    "messageOrder": "receiveTime"
+  },
+  "version": 5
+}

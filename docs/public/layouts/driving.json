@@ -1,0 +1,66 @@
+{
+  "layout": "3D Panel!iggr13",
+  "savedProps": {
+    "3D Panel!iggr13": {
+      "checkedKeys": [
+        "name:Topics",
+        "t:/vector_map",
+        "t:/ego_vehicle",
+        "name:(Uncategorized)"
+      ],
+      "expandedKeys": [
+        "name:(Uncategorized)"
+      ],
+      "followTf": "base_link",
+      "cameraState": {
+        "distance": 43.60449387215925,
+        "perspective": false,
+        "phi": 0.7853981633974483,
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "thetaOffset": 0,
+        "fovy": 0.7853981633974483,
+        "near": 0.01,
+        "far": 5000
+      },
+      "modifiedNamespaceTopics": [],
+      "pinTopics": false,
+      "topicSettings": {
+        "/ego_vehicle": {
+          "useCarModel": true
+        }
+      },
+      "autoSyncCameraState": false,
+      "settingsByKey": {},
+      "followOrientation": false
+    }
+  },
+  "globalVariables": {
+    "clickedWaypointId": 19,
+    "clickedCheckpointId": null
+  },
+  "userNodes": {},
+  "linkedGlobalVariables": [
+    {
+      "topic": "/waypoints_publisher/markers",
+      "markerKeyPath": [
+        "id"
+      ],
+      "name": "clickedWaypointId"
+    },
+    {
+      "topic": "/checkpoint_handler/markers",
+      "markerKeyPath": [
+        "id"
+      ],
+      "name": "clickedCheckpointId"
+    }
+  ],
+  "playbackConfig": {
+    "speed": 1,
+    "messageOrder": "receiveTime"
+  }
+}
