@@ -193,27 +193,28 @@ export function loadWebviz(hooksToSet) {
 
   // Render a warning message if the user has an old browser.
   // From https://stackoverflow.com/a/4900484
-  const chromeMatch = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
-  const chromeVersion = chromeMatch ? parseInt(chromeMatch[2], 10) : 0;
-  if (chromeVersion < MINIMUM_CHROME_VERSION) {
-    hideLoadingLogo();
-    Confirm({
-      title: "Update your browser",
-      prompt:
-        chromeVersion === 0
-          ? `You are not using Google Chrome. Please use Chrome ${MINIMUM_CHROME_VERSION} or later to continue.`
-          : `Chrome ${chromeVersion} is not supported. Please use Chrome ${MINIMUM_CHROME_VERSION} or later to continue.`,
-      confirmStyle: "primary",
-      ok: chromeVersion === 0 ? "Download Chrome" : "Update Chrome",
-      cancel: "Continue anyway",
-    }).then((ok) => {
-      if (ok) {
-        window.location = "https://www.google.com/chrome/";
-      } else {
-        render();
-      }
-    });
-  } else {
-    render();
-  }
+  // const chromeMatch = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
+  // const chromeVersion = chromeMatch ? parseInt(chromeMatch[2], 10) : 0;
+  // if (chromeVersion < MINIMUM_CHROME_VERSION) {
+  //   hideLoadingLogo();
+  //   Confirm({
+  //     title: "Update your browser",
+  //     prompt:
+  //       chromeVersion === 0
+  //         ? `You are not using Google Chrome. Please use Chrome ${MINIMUM_CHROME_VERSION} or later to continue.`
+  //         : `Chrome ${chromeVersion} is not supported. Please use Chrome ${MINIMUM_CHROME_VERSION} or later to continue.`,
+  //     confirmStyle: "primary",
+  //     ok: chromeVersion === 0 ? "Download Chrome" : "Update Chrome",
+  //     cancel: "Continue anyway",
+  //   }).then((ok) => {
+  //     if (ok) {
+  //       window.location = "https://www.google.com/chrome/";
+  //     } else {
+  //       render();
+  //     }
+  //   });
+  // } else {
+  //   render();
+  // }
+  render();
 }
