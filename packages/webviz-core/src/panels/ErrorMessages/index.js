@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
@@ -15,37 +15,50 @@ import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import LogList from "webviz-core/src/components/LogList";
+import type { RenderRow } from "webviz-core/src/components/LogList";
 import type { SaveConfig } from "webviz-core/src/types/panels";
-
-const STextArea = styled.textarea`
-  width: 100%;
-  height: 100%;
-  resize: none;
-  border: none;
-  margin: 0;
-  padding: 4px 6px;
-  &:focus {
-    background: rgba(255, 255, 255, 0.1);
-  }
-`;
 
 type Config = { noteText: string };
 type Props = { config: Config, saveConfig: SaveConfig<Config> };
+
 function ErrorMessages({ config, saveConfig }: Props) {
-  const onChangeText = useCallback(
-    (event: SyntheticInputEvent<HTMLTextAreaElement>) => {
-      saveConfig({ noteText: event.target.value });
-    },
-    [saveConfig]
-  );
+
+  const [items, setItems] = useState([
+    { id: 1, text: "こんにちは" },
+    { id: 2, text: "漢字" },
+    { id: 3, text: "hello" },
+    { id: 4, text: "全角　スペース" },
+  ]);
 
   return (
     <Flex col style={{ height: "100%" }}>
       <PanelToolbar helpContent={helpContent} floating />
-      <STextArea placeholder="Enter note here" value={config.noteText} onChange={onChangeText} />
+      <LogList
+        items={items}
+        renderRow={({ item, style }) => (
+          <div
+            style={{
+              ...style,
+              display: "flex",
+              flexDirection: "column",
+              padding: 8,
+              borderBottom: "1px solid gray",
+            }}
+            key={item.id}
+          >
+            <p>
+              <span style={{ color: "orange", marginRight: 8 }}>{item.id}</span>
+              <span>{item.text}</span>
+            </p>
+          </div>
+        )}
+      />
     </Flex>
   );
+
 }
+
 ErrorMessages.panelType = "ErrorMessages";
 ErrorMessages.defaultConfig = { noteText: "" };
 
