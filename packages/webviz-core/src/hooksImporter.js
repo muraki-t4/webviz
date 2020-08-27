@@ -37,6 +37,7 @@ export function panelsByCategory() {
   const Tab = require("webviz-core/src/panels/Tab").default;
   const TwoDimensionalPlot = require("webviz-core/src/panels/TwoDimensionalPlot").default;
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
+  const ErrorMessages = require("webviz-core/src/panels/ErrorMessages").default;
   const { ndash } = require("webviz-core/src/util/entities");
 
   const ros = [
@@ -57,6 +58,7 @@ export function panelsByCategory() {
     { title: "Global Variable Slider", component: GlobalVariableSlider },
     { title: "Node Playground", component: NodePlayground },
     { title: "Notes", component: Note },
+    { title: "Error Messages", component: ErrorMessages },
     { title: "Tab", component: Tab },
     { title: "Webviz Internals", component: Internals },
     { title: "Data Source Info", component: SourceInfo },
@@ -161,7 +163,7 @@ export function perPanelHooks() {
         "text",
         "triangleList",
       ],
-      renderAdditionalMarkers: () => {},
+      renderAdditionalMarkers: () => { },
       topics: [],
       iconsByDatatype: {
         "visualization_msgs/Marker": HexagonIcon,
@@ -177,7 +179,7 @@ export function perPanelHooks() {
       icons: {},
       AdditionalToolbarItems: () => null,
       LaserScanVert,
-      getSelectionState: () => {},
+      getSelectionState: () => { },
       getTopicsToRender: () => new Set(),
       consumeMessage: (topic, datatype, msg, consumeMethods, { errors }) => {
         // TF messages are consumed by TransformBuilder, not SceneBuilder.
@@ -194,7 +196,7 @@ export function perPanelHooks() {
       getMapPalette() {
         return defaultMapPalette;
       },
-      consumePose: () => {},
+      consumePose: () => { },
       getMarkerColor: (topic, markerColor) => markerColor,
       ungroupedNodesCategory: "Topics",
       rootTransformFrame: "map",
