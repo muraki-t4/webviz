@@ -20,8 +20,6 @@ import type { RenderRow } from "webviz-core/src/components/LogList";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { useMessagesByTopic } from "webviz-core/src/PanelAPI";
 
-import messages from './messages.json';
-
 type Config = { errorMessages: Object };
 type Props = { config: Config };
 
@@ -30,13 +28,26 @@ function ErrorMessages({ config }: Props) {
   const topicMessages = useMessagesByTopic({ topics: ["/error_vis"], historySize: 1 })["/error_vis"];
 
   const [items, setItems] = useState([]);
+  const [messages, setMessages] = useState({});
+
+  const getErrorMessages = () => {
+    const params = new URLSearchParams(window.location.search);
+    const errorMessageUrl = params.get("error-message-url");
+    if (errorMessageUrl) {
+      fetch(errorMessageUrl).then(res => res.json()).then(json => setMessages(json));
+    }
+  }
+
+  useEffect(() => {
+    getErrorMessages();
+  }, []);
 
   useEffect(() => {
     if (topicMessages && topicMessages.length > 0) {
       const { message, receiveTime } = topicMessages[0];
       const { errorid, nextid, startid } = message;
       if (messages.hasOwnProperty(errorid)) {
-        const item = { id: startid, text: messages[errorid].message };
+        const item = { id: startid, text: messages[errorid] };
         setItems([...items, item]);
       }
     }
@@ -54,7 +65,7 @@ function ErrorMessages({ config }: Props) {
               display: "flex",
               flexDirection: "column",
               padding: 8,
-              borderBottom: "1px solid gray",
+              // borderBottom: "1px solid gray",
               fontSize: 14,
             }}
             key={item.id}
