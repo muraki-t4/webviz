@@ -1,0 +1,115 @@
+{
+  "layout": {
+    "direction": "row",
+    "first": {
+      "first": "ImageViewPanel!3jfabdl",
+      "second": "ImageViewPanel!40whxgd",
+      "direction": "column"
+    },
+    "second": {
+      "first": "3D Panel!1my2ydk",
+      "second": "ErrorMessages!1h8865l",
+      "direction": "row",
+      "splitPercentage": 71.60338119242228
+    },
+    "splitPercentage": 22.126281705342688
+  },
+  "savedProps": {
+    "ImageViewPanel!3jfabdl": {
+      "cameraTopic": "/camera_out/image_raw/compressed",
+      "enabledMarkerTopics": [],
+      "customMarkerTopicOptions": [],
+      "scale": 0.2,
+      "transformMarkers": true,
+      "synchronize": false,
+      "mode": "fit",
+      "zoomPercentage": 63.4375,
+      "offset": [
+        0,
+        58.75
+      ]
+    },
+    "ImageViewPanel!40whxgd": {
+      "cameraTopic": "/camera_in/image_raw/compressed",
+      "enabledMarkerTopics": [],
+      "customMarkerTopicOptions": [],
+      "scale": 0.2,
+      "transformMarkers": true,
+      "synchronize": false,
+      "mode": "fit",
+      "zoomPercentage": 63.4375,
+      "offset": [
+        0,
+        58.75
+      ]
+    },
+    "3D Panel!1my2ydk": {
+      "checkedKeys": [
+        "ns:/waypoint_saver_marker:saved_waypoint_arrow",
+        "t:/ego_vehicle",
+        "ns:/checkpoint_handler/markers:checkpoints",
+        "ns:/checkpoint_handler/markers:checkpoint_id",
+        "t:/checkpoint_handler/markers",
+        "t:/vector_map",
+        "name:Topic",
+        "name:Topics",
+        "t:/waypoint_saver_marker"
+      ],
+      "expandedKeys": [
+        "name:Topics"
+      ],
+      "followTf": "base_link",
+      "cameraState": {
+        "distance": 49.701806583560995,
+        "perspective": false,
+        "phi": 0.7853981633974483,
+        "targetOffset": [
+          5.32804416360446,
+          -6.360514193338977,
+          0
+        ],
+        "thetaOffset": 0.763393650229678,
+        "fovy": 0.7853981633974483,
+        "near": 0.01,
+        "far": 5000
+      },
+      "modifiedNamespaceTopics": [
+        "/waypoint_saver_marker",
+        "/checkpoint_handler/markers"
+      ],
+      "pinTopics": false,
+      "settingsByKey": {
+        "t:/waypoint_saver_marker": {
+          "overrideColor": {
+            "r": 0.0784313725490196,
+            "g": 0,
+            "b": 1,
+            "a": 0.8
+          }
+        },
+        "t:/ndt_pose": {
+          "useCarModel": false
+        },
+        "t:/localizer_pose": {
+          "useCarModel": true
+        },
+        "t:/current_pose": {
+          "useCarModel": false
+        },
+        "t:/ego_vehicle": {
+          "useCarModel": true
+        }
+      },
+      "autoSyncCameraState": false,
+      "followOrientation": false
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "linkedGlobalVariables": [],
+  "playbackConfig": {
+    "speed": 1,
+    "messageOrder": "receiveTime"
+  },
+  "version": 9
+}
