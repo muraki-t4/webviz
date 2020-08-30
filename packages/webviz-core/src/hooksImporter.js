@@ -38,6 +38,7 @@ export function panelsByCategory() {
   const TwoDimensionalPlot = require("webviz-core/src/panels/TwoDimensionalPlot").default;
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
   const ErrorMessages = require("webviz-core/src/panels/ErrorMessages").default;
+  const TrafficLight = require("webviz-core/src/panels/TrafficLight").default;
   const { ndash } = require("webviz-core/src/util/entities");
 
   const ros = [
@@ -59,6 +60,7 @@ export function panelsByCategory() {
     { title: "Node Playground", component: NodePlayground },
     { title: "Notes", component: Note },
     { title: "Error Messages", component: ErrorMessages },
+    { title: "Traffic Light", component: TrafficLight },
     { title: "Tab", component: Tab },
     { title: "Webviz Internals", component: Internals },
     { title: "Data Source Info", component: SourceInfo },
