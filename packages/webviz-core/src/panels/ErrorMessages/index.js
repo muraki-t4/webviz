@@ -29,12 +29,18 @@ function ErrorMessages({ config }: Props) {
 
   const [items, setItems] = useState([]);
   const [messages, setMessages] = useState({});
+  const [error, setError] = useState(null);
 
   const getErrorMessages = () => {
-    const params = new URLSearchParams(window.location.search);
-    const errorMessageUrl = params.get("error-message-url");
-    if (errorMessageUrl) {
-      fetch(errorMessageUrl).then(res => res.json()).then(json => setMessages(json));
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const errorMessageUrl = params.get("error-message-url");
+      fetch(errorMessageUrl)
+        .then(res => res.json())
+        .then(json => setMessages(json))
+        .catch(error => setError(error));
+    } catch (error) {
+      setError(error);
     }
   }
 
@@ -77,6 +83,11 @@ function ErrorMessages({ config }: Props) {
           </div>
         )}
       />
+      {error &&
+        <div style={{ padding: 8, fontSize: 14 }}>
+          <p style={{ color: "orange" }}>エラーメッセージ一覧が取得できませんでした</p>
+        </div>
+      }
     </Flex>
   );
 
