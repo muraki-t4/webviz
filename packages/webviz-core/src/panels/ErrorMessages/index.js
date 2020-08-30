@@ -83,7 +83,11 @@ function ErrorMessages({ config }: Props) {
           </div>
         )}
       />
-      {error && <p>エラーメッセージ一覧が取得できませんでした</p>}
+      {error &&
+        <div style={{ padding: 8, fontSize: 14 }}>
+          <p style={{ color: "orange" }}>エラーメッセージ一覧が取得できませんでした</p>
+        </div>
+      }
     </Flex>
   );
 
