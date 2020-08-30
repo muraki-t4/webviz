@@ -39,6 +39,7 @@ export function panelsByCategory() {
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
   const ErrorMessages = require("webviz-core/src/panels/ErrorMessages").default;
   const TrafficLight = require("webviz-core/src/panels/TrafficLight").default;
+  const NDTMonitor = require("webviz-core/src/panels/NDTMonitor").default;
   const { ndash } = require("webviz-core/src/util/entities");
 
   const ros = [
@@ -59,12 +60,16 @@ export function panelsByCategory() {
     { title: "Global Variable Slider", component: GlobalVariableSlider },
     { title: "Node Playground", component: NodePlayground },
     { title: "Notes", component: Note },
-    { title: "Error Messages", component: ErrorMessages },
-    { title: "Traffic Light", component: TrafficLight },
     { title: "Tab", component: Tab },
     { title: "Webviz Internals", component: Internals },
     { title: "Data Source Info", component: SourceInfo },
   ];
+
+  const autoware = [
+    { title: "NDT Monitor", component: NDTMonitor },
+    { title: "Error Messages", component: ErrorMessages },
+    { title: "Traffic Light", component: TrafficLight },
+  ]
 
   const debugging = [
     { title: "Number of Renders", component: NumberOfRenders },
@@ -72,7 +77,7 @@ export function panelsByCategory() {
     { title: "Subscribe to List", component: SubscribeToList },
   ];
 
-  return { ros, utilities, debugging };
+  return { ros, utilities, autoware, debugging };
 }
 
 export function perPanelHooks() {
