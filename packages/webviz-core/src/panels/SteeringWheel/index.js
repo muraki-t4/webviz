@@ -47,9 +47,9 @@ function SteeringWheel({ config }: Props) {
       <IconWrapper rotate={steeringAngle}>
         <SteeringWheelIcon />
       </IconWrapper>
-      <div style={{ textAlign: 'center', fontSize: 20 }}>
+      <Flex row center style={{ fontSize: 20, textAlign: "center" }}>
         <span>{Math.floor(steeringAngle)}</span>
-      </div>
+      </Flex>
     </Flex>
   );
 
