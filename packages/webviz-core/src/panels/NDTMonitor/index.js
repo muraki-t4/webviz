@@ -39,16 +39,15 @@ function NDTMonitor({ config }: Props) {
   return (
     <Flex col style={{ height: "100%" }}>
       <PanelToolbar helpContent={helpContent} floating />
-      <div style={{ padding: 5 }}>
+      <Flex row style={{ fontSize: 16, textAlign: "center" }}>
         {ndtInfo ?
           <p style={{
-            fontSize: 16,
             color: `rgb(${ndtInfo.fg_color.r * 255}, ${ndtInfo.fg_color.g * 255}, ${ndtInfo.fg_color.b * 255})`,
           }}>{ndtInfo.text}</p>
           :
           <p>No messages from `/ndt_monitor/ndt_info_text`</p>
         }
-      </div>
+      </Flex>
     </Flex>
   );
 
