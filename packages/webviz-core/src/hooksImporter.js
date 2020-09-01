@@ -41,6 +41,7 @@ export function panelsByCategory() {
   const TrafficLight = require("webviz-core/src/panels/TrafficLight").default;
   const NDTMonitor = require("webviz-core/src/panels/NDTMonitor").default;
   const SteeringWheel = require("webviz-core/src/panels/SteeringWheel").default;
+  const SpeedMeter = require("webviz-core/src/panels/SpeedMeter").default;
   const { ndash } = require("webviz-core/src/util/entities");
 
   const ros = [
@@ -68,6 +69,7 @@ export function panelsByCategory() {
 
   const autoware = [
     { title: "NDT Monitor", component: NDTMonitor },
+    { title: "Speed Meter", component: SpeedMeter },
     { title: "Steering Wheel", component: SteeringWheel },
     { title: "Error Messages", component: ErrorMessages },
     { title: "Traffic Light", component: TrafficLight },
