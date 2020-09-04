@@ -15,8 +15,6 @@ import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import type { RenderRow } from "webviz-core/src/components/LogList";
-import type { SaveConfig } from "webviz-core/src/types/panels";
 import { useMessagesByTopic } from "webviz-core/src/PanelAPI";
 
 import GreenLight from './svg/Green.svg';
@@ -35,10 +33,11 @@ function TrafficLight({ config }: Props) {
 
   useEffect(() => {
     if (topicMessages && topicMessages.length > 0) {
-      const { message, receiveTime } = topicMessages[0];
-      const { header, results } = message;
+      const { message } = topicMessages[0];
+      const { results } = message;
       if (results && results.length > 0) {
-        setTrafficLightResult(results[0]);
+        const targetResult = results.filter(result => result.light_id === 12);
+        if (targetResult.length > 0) setTrafficLightResult(targetResult[0]);
       }
     }
   }, [topicMessages]);
