@@ -21,10 +21,10 @@ ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 COPY . .
 
 # Delete .gitignore files, so we don't accidentally pollute our image.
-RUN git clean -Xf
+# RUN git clean -Xf
 
 # Build the static webviz.
-RUN npm run install-ci
+RUN npm run bootstrap
 RUN npm run build
 RUN npm run build-static-webviz
 
