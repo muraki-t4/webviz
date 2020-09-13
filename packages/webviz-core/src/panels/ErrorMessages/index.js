@@ -25,7 +25,7 @@ type Props = { config: Config };
 
 function ErrorMessages({ config }: Props) {
 
-  const topicMessages = useMessagesByTopic({ topics: ["/error_vis"], historySize: 1 })["/error_vis"];
+  const topicMessages = useMessagesByTopic({ topics: ["/error_vis_id"], historySize: 1 })["/error_vis_id"];
 
   const [items, setItems] = useState([]);
   const [messages, setMessages] = useState({});
@@ -51,9 +51,9 @@ function ErrorMessages({ config }: Props) {
   useEffect(() => {
     if (topicMessages && topicMessages.length > 0) {
       const { message, receiveTime } = topicMessages[0];
-      const { errorid, nextid, startid } = message;
+      const errorid = message.data;
       if (messages.hasOwnProperty(errorid)) {
-        const item = { id: startid, text: messages[errorid] };
+        const item = { id: errorid, text: messages[errorid] };
         setItems([...items, item]);
       }
     }
