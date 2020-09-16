@@ -10,79 +10,116 @@ import _ from "lodash";
 import React, { useCallback, useState, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
+import ROSLIB from 'roslib';
 
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import LogList from "webviz-core/src/components/LogList";
-import { useMessagesByTopic } from "webviz-core/src/PanelAPI";
 
 type Config = { errorMessages: Object };
 type Props = { config: Config };
 
+const toSec = ({ secs, nsecs }) => {
+  return secs + nsecs * 1e-9;
+}
+
+const toSecFromNS = (ns) => {
+  return parseInt(ns) * 1e-9;
+}
+
 function ErrorMessages({ config }: Props) {
 
-  const topicMessages = useMessagesByTopic({ topics: ["/error_vis_id"], historySize: 1 })["/error_vis_id"];
-
-  const [items, setItems] = useState([]);
-  const [messages, setMessages] = useState({});
+  const [errorLogs, setErrorLogs] = useState([]);
   const [error, setError] = useState(null);
+  const [startTime, setStartTime] = useState(0);
 
-  const getErrorMessages = () => {
+  const params = new URLSearchParams(window.location.search);
+  const rosbridgeWebsocketUrl = params.get("rosbridge-websocket-url");
+  const errorLogUrl = params.get("error-log-url");
+  const offset = params.get("offset") || 3;
+
+  const ros = new ROSLIB.Ros({ url: rosbridgeWebsocketUrl });
+
+  const seekService = new ROSLIB.Service({
+    ros: ros,
+    name: '/rosbag_player_controller/seek_and_play',
+    serviceType: 'controllable_rosbag_player/Seek',
+  });
+
+  const callSeekService = (timestampNS) => {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const errorMessageUrl = params.get("error-message-url");
-      fetch(errorMessageUrl)
+      const ts = toSecFromNS(timestampNS) - startTime - offset;
+      const request = new ROSLIB.ServiceRequest({
+        time: ts,
+      });
+      seekService.callService(request, result => {
+        console.log(result);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const getErrorLog = () => {
+    try {
+      fetch(errorLogUrl)
         .then(res => res.json())
-        .then(json => setMessages(json))
+        .then(json => setErrorLogs(json))
         .catch(error => setError(error));
     } catch (error) {
       setError(error);
     }
   }
 
-  useEffect(() => {
-    getErrorMessages();
-  }, []);
+  const sortByTimestamp = (a, b) => {
+    return (parseInt(a.timestamp) > parseInt(b.timestamp)) ? 1 : ((parseInt(b.timestamp) > parseInt(a.timestamp)) ? -1 : 0);
+  }
 
   useEffect(() => {
-    if (topicMessages && topicMessages.length > 0) {
-      const { message, receiveTime } = topicMessages[0];
-      const errorid = message.data;
-      if (messages.hasOwnProperty(errorid)) {
-        const item = { id: errorid, text: messages[errorid] };
-        setItems([...items, item]);
-      }
-    }
-  }, [topicMessages]);
+    getErrorLog();
+    const playerEventListener = new ROSLIB.Topic({
+      ros: ros,
+      name: '/rosbag_player_controller/rosbag_start_time',
+      messageType: 'rosgraph_msgs/Clock',
+    });
+    playerEventListener.subscribe(({ clock }) => {
+      setStartTime(toSec(clock));
+    });
+    return () => playerEventListener.unsubscribe();
+  }, []);
 
   return (
     <Flex col style={{ height: "100%" }}>
       <PanelToolbar helpContent={helpContent} floating />
+      <div style={{ padding: 10, fontSize: 16 }}>
+        <span>検定結果一覧</span>
+      </div>
       <LogList
-        items={items}
+        style={{ overflow: 'scroll', paddingBottom: 20 }}
+        items={errorLogs.sort(sortByTimestamp)}
         renderRow={({ item, style }) => (
           <div
             style={{
               ...style,
               display: "flex",
               flexDirection: "column",
-              padding: 8,
-              // borderBottom: "1px solid gray",
-              fontSize: 14,
+              padding: 10,
+              fontSize: 16,
             }}
-            key={item.id}
+            key={item.error_id}
+            onClick={() => callSeekService(item.timestamp)}
           >
             <p>
-              <span style={{ color: "orange", marginRight: 8 }}>{item.id}</span>
-              <span>{item.text}</span>
+              <span style={{ color: "orange", marginRight: 8 }}>{item.scenario_start_id}</span>
+              <span>{item.error_message}</span>
             </p>
           </div>
         )}
       />
       {error &&
-        <div style={{ padding: 8, fontSize: 14 }}>
+        <div style={{ padding: 10, fontSize: 14 }}>
           <p style={{ color: "orange" }}>エラーメッセージ一覧が取得できませんでした</p>
         </div>
       }
