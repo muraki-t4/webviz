@@ -16,8 +16,6 @@ import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import LogList from "webviz-core/src/components/LogList";
-import type { RenderRow } from "webviz-core/src/components/LogList";
-import type { SaveConfig } from "webviz-core/src/types/panels";
 import { useMessagesByTopic } from "webviz-core/src/PanelAPI";
 
 type Config = { errorMessages: Object };
