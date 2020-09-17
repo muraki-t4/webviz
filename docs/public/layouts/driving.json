@@ -11,10 +11,19 @@
         "name:Topic",
         "name:Topics",
         "t:/waypoint_saver_marker",
-        "t:/vector_map"
+        "t:/vector_map",
+        "t:/ego_waypoint",
+        "ns:/vector_map:road_edge",
+        "ns:/vector_map:white_line",
+        "ns:/vector_map:stop_line",
+        "ns:/vector_map:cross_walk",
+        "ns:/vector_map:road_pole",
+        "ns:/vector_map:signal",
+        "ns:/vector_map:rail_crossing"
       ],
       "expandedKeys": [
-        "name:Topics"
+        "name:Topics",
+        "t:/vector_map"
       ],
       "followTf": "base_link",
       "cameraState": {
@@ -33,7 +42,8 @@
       },
       "modifiedNamespaceTopics": [
         "/waypoint_saver_marker",
-        "/checkpoint_handler/markers"
+        "/checkpoint_handler/markers",
+        "/vector_map"
       ],
       "pinTopics": false,
       "settingsByKey": {
