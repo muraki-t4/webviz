@@ -106,7 +106,7 @@ function ErrorMessages({ config }: Props) {
               display: "flex",
               flexDirection: "column",
               padding: 10,
-              fontSize: 16,
+              fontSize: 14,
             }}
             key={item.error_id}
             onClick={() => callSeekService(item.timestamp)}
