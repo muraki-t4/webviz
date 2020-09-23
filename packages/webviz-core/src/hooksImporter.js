@@ -38,6 +38,7 @@ export function panelsByCategory() {
   const TwoDimensionalPlot = require("webviz-core/src/panels/TwoDimensionalPlot").default;
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
   const ErrorMessages = require("webviz-core/src/panels/ErrorMessages").default;
+  const ErrorMessagesOffline = require("webviz-core/src/panels/ErrorMessagesOffline").default;
   const TrafficLight = require("webviz-core/src/panels/TrafficLight").default;
   const NDTMonitor = require("webviz-core/src/panels/NDTMonitor").default;
   const SteeringWheel = require("webviz-core/src/panels/SteeringWheel").default;
@@ -72,6 +73,7 @@ export function panelsByCategory() {
     { title: "Speed Meter", component: SpeedMeter },
     { title: "Steering Wheel", component: SteeringWheel },
     { title: "Error Messages", component: ErrorMessages },
+    { title: "Error Messages Offline", component: ErrorMessagesOffline },
     { title: "Traffic Light", component: TrafficLight },
   ]
 
