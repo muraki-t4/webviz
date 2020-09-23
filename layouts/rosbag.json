@@ -1,0 +1,114 @@
+{
+  "layout": {
+    "first": {
+      "first": {
+        "first": {
+          "first": "TrafficLight!1ex7mg5",
+          "second": {
+            "first": "SpeedMeter!4l1h9iu",
+            "second": "SteeringWheel!3x2g5p7",
+            "direction": "row"
+          },
+          "direction": "column",
+          "splitPercentage": 35.32971799492734
+        },
+        "second": "ImageViewPanel!4eqgwu2",
+        "direction": "column"
+      },
+      "second": "ImageViewPanel!1mqy67m",
+      "direction": "column",
+      "splitPercentage": 61.368777221252
+    },
+    "second": {
+      "first": "3D Panel!gtpfyh",
+      "second": "ErrorMessagesOffline!4axon36",
+      "direction": "row",
+      "splitPercentage": 69.13615393157477
+    },
+    "direction": "row",
+    "splitPercentage": 19.29919137466307
+  },
+  "savedProps": {
+    "ImageViewPanel!4eqgwu2": {
+      "cameraTopic": "/camera_out_rotated/image_raw/compressed",
+      "enabledMarkerTopics": [],
+      "customMarkerTopicOptions": [],
+      "scale": 0.2,
+      "transformMarkers": true,
+      "synchronize": false,
+      "mode": "fit",
+      "zoomPercentage": 53.75,
+      "offset": [
+        5,
+        0
+      ]
+    },
+    "ImageViewPanel!1mqy67m": {
+      "cameraTopic": "/camera_in/image_raw/compressed",
+      "enabledMarkerTopics": [],
+      "customMarkerTopicOptions": [],
+      "scale": 0.2,
+      "transformMarkers": true,
+      "synchronize": false,
+      "mode": "fit",
+      "zoomPercentage": 55.3125,
+      "offset": [
+        0,
+        30.25
+      ]
+    },
+    "3D Panel!gtpfyh": {
+      "checkedKeys": [
+        "name:Topics",
+        "t:/ego_vehicle",
+        "t:/vector_map_republished",
+        "ns:/vector_map_republished:road_edge",
+        "ns:/vector_map_republished:white_line",
+        "ns:/vector_map_republished:stop_line",
+        "ns:/vector_map_republished:cross_walk",
+        "ns:/vector_map_republished:road_pole",
+        "ns:/vector_map_republished:signal",
+        "ns:/vector_map_republished:rail_crossing",
+        "t:/ego_waypoint"
+      ],
+      "expandedKeys": [
+        "name:Topics",
+        "t:/ego_waypoint"
+      ],
+      "followTf": "base_link",
+      "cameraState": {
+        "distance": 63.75,
+        "perspective": false,
+        "phi": 0.7853981633974483,
+        "targetOffset": [
+          -0.5932109393862834,
+          -2.8487625543130224,
+          0
+        ],
+        "thetaOffset": 0.7909090909090912,
+        "fovy": 0.7853981633974483,
+        "near": 0.01,
+        "far": 5000
+      },
+      "modifiedNamespaceTopics": [
+        "/vector_map_republished"
+      ],
+      "pinTopics": false,
+      "settingsByKey": {
+        "t:/ego_vehicle": {
+          "useCarModel": true
+        }
+      },
+      "autoSyncCameraState": false,
+      "followOrientation": false
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "linkedGlobalVariables": [],
+  "playbackConfig": {
+    "speed": 1,
+    "messageOrder": "receiveTime"
+  },
+  "version": 9
+}
