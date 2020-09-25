@@ -39,6 +39,7 @@ export function panelsByCategory() {
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
   const ErrorMessages = require("webviz-core/src/panels/ErrorMessages").default;
   const ErrorMessagesOffline = require("webviz-core/src/panels/ErrorMessagesOffline").default;
+  const ErrorMessagesOnline = require("webviz-core/src/panels/ErrorMessagesOnline").default;
   const TrafficLight = require("webviz-core/src/panels/TrafficLight").default;
   const NDTMonitor = require("webviz-core/src/panels/NDTMonitor").default;
   const SteeringWheel = require("webviz-core/src/panels/SteeringWheel").default;
@@ -74,6 +75,7 @@ export function panelsByCategory() {
     { title: "Steering Wheel", component: SteeringWheel },
     { title: "Error Messages", component: ErrorMessages },
     { title: "Error Messages Offline", component: ErrorMessagesOffline },
+    { title: "Error Messages Online", component: ErrorMessagesOnline },
     { title: "Traffic Light", component: TrafficLight },
   ]
 
