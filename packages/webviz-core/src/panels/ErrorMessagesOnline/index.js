@@ -23,28 +23,24 @@ type Props = { config: Config };
 
 function ErrorMessagesOnline({ config }: Props) {
 
+  const params = new URLSearchParams(window.location.search);
   const topicMessages = useMessagesByTopic({ topics: ["/error_vis"], historySize: 1 })["/error_vis"] || [];
 
   const [items, setItems] = useState([]);
   const [messages, setMessages] = useState({});
   const [error, setError] = useState(null);
 
-  const getErrorMessages = () => {
+  const getErrorMessages = async () => {
     try {
-      const params = new URLSearchParams(window.location.search);
       const errorMessageUrl = params.get("error-message-url");
-      fetch(errorMessageUrl)
-        .then(res => res.json())
-        .then(json => setMessages(json))
-        .catch(error => setError(error));
+      const res = await fetch(errorMessageUrl);
+      setMessages(res.json());
     } catch (error) {
       setError(error);
     }
   }
 
-  useEffect(() => {
-    getErrorMessages();
-  }, []);
+  useEffect(getErrorMessages, [params]);
 
   useEffect(() => {
     for (const { message } of topicMessages) {
@@ -59,7 +55,11 @@ function ErrorMessagesOnline({ config }: Props) {
   return (
     <Flex col style={{ height: "100%" }}>
       <PanelToolbar helpContent={helpContent} floating />
+      <div style={{ padding: 10, fontSize: 16 }}>
+        <span>検定結果一覧</span>
+      </div>
       <LogList
+        style={{ overflow: 'scroll', paddingBottom: 20 }}
         items={items}
         renderRow={({ item, style }) => (
           <div
