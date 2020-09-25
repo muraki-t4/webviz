@@ -7,9 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
-import styled from "styled-components";
 
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
@@ -40,7 +39,9 @@ function ErrorMessagesOnline({ config }: Props) {
     }
   }
 
-  useEffect(getErrorMessages, [params]);
+  useEffect(() => {
+    getErrorMessages();
+  }, []);
 
   useEffect(() => {
     for (const { message } of topicMessages) {
