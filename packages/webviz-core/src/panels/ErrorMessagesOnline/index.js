@@ -23,7 +23,7 @@ type Props = { config: Config };
 function ErrorMessagesOnline({ config }: Props) {
 
   const params = new URLSearchParams(window.location.search);
-  const topicMessages = useMessagesByTopic({ topics: ["/error_vis"], historySize: 1 })["/error_vis"] || [];
+  const topicMessages = useMessagesByTopic({ topics: ["/error_vis"], historySize: 1 })["/error_vis"];
 
   const [items, setItems] = useState([]);
   const [messages, setMessages] = useState({});
@@ -33,7 +33,8 @@ function ErrorMessagesOnline({ config }: Props) {
     try {
       const errorMessageUrl = params.get("error-message-url");
       const res = await fetch(errorMessageUrl);
-      setMessages(res.json());
+      const data = await res.json();
+      setMessages(data);
     } catch (error) {
       setError(error);
     }
