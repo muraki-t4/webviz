@@ -24,7 +24,12 @@
       "direction": "column",
       "splitPercentage": 18.874560375146544
     },
-    "second": "3D Panel!1my2ydk",
+    "second": {
+      "first": "3D Panel!1my2ydk",
+      "second": "ErrorMessagesOnline!43bilmu",
+      "direction": "row",
+      "splitPercentage": 72.74889329672784
+    },
     "direction": "row",
     "splitPercentage": 22.97780959198282
   },
@@ -37,10 +42,10 @@
       "transformMarkers": true,
       "synchronize": false,
       "mode": "fit",
-      "zoomPercentage": 42.291666666666664,
+      "zoomPercentage": 50.15625,
       "offset": [
-        9.666666666666657,
-        -0.125
+        0,
+        1.625
       ]
     },
     "ImageViewPanel!opif3c": {
@@ -51,10 +56,10 @@
       "transformMarkers": true,
       "synchronize": false,
       "mode": "fit",
-      "zoomPercentage": 42.291666666666664,
+      "zoomPercentage": 50.15625,
       "offset": [
-        9.666666666666657,
-        -0.125
+        0,
+        1.625
       ]
     },
     "3D Panel!1my2ydk": {
@@ -67,7 +72,8 @@
         "name:Topic",
         "name:Topics",
         "t:/waypoint_saver_marker",
-        "t:/vector_map"
+        "t:/vector_map_republished",
+        "t:/ego_waypoint"
       ],
       "expandedKeys": [
         "name:Topics"
