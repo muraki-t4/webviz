@@ -40,6 +40,10 @@ function ErrorMessagesOnline({ config }: Props) {
     }
   }
 
+  const sortByTimestamp = (a, b) => {
+    return (parseInt(a.id) > parseInt(b.id)) ? -1 : ((parseInt(b.id) > parseInt(a.id)) ? 1 : 0);
+  }
+
   useEffect(() => {
     getErrorMessages();
   }, []);
@@ -50,6 +54,8 @@ function ErrorMessagesOnline({ config }: Props) {
       if (messages.hasOwnProperty(errorid)) {
         const item = { id: startid, text: messages[errorid] };
         setItems([...items, item]);
+        const audio = new Audio("/audios/alert.mp3");
+        audio.play().catch((e) => console.error(e));
       }
     }
   }, [topicMessages]);
@@ -57,12 +63,12 @@ function ErrorMessagesOnline({ config }: Props) {
   return (
     <Flex col style={{ height: "100%" }}>
       <PanelToolbar helpContent={helpContent} floating />
-      <div style={{ padding: 10, fontSize: 16 }}>
+      <div style={{ padding: 10, fontSize: 18 }}>
         <span>検定結果一覧</span>
       </div>
       <LogList
-        style={{ overflow: 'scroll', paddingBottom: 20 }}
-        items={items}
+        style={{ overflow: 'scroll' }}
+        items={items.sort(sortByTimestamp)}
         renderRow={({ item, style }) => (
           <div
             style={{
@@ -70,7 +76,7 @@ function ErrorMessagesOnline({ config }: Props) {
               display: "flex",
               flexDirection: "column",
               padding: 8,
-              fontSize: 14,
+              fontSize: 18,
             }}
             key={item.id}
           >
@@ -81,8 +87,9 @@ function ErrorMessagesOnline({ config }: Props) {
           </div>
         )}
       />
-      {error &&
-        <div style={{ padding: 8, fontSize: 14 }}>
+      {
+        error &&
+        <div style={{ padding: 8, fontSize: 16 }}>
           <p style={{ color: "orange" }}>エラーメッセージ一覧が取得できませんでした</p>
         </div>
       }
