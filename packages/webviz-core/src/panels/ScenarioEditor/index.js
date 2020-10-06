@@ -7,31 +7,34 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
-import CSVReader from 'react-csv-reader';
+import ROSLIB from "roslib";
 
-import List from '@material-ui/core/List';
-import { Container, Draggable } from 'react-smooth-dnd';
-import arrayMove from 'array-move';
+import CheckpointHandler from './CheckpointHandler';
+import WaypointHandler from './WaypointHandler';
 
-import Scenario from "./Scenario";
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
+import VectorMapLoader from "./VectorMapLoader";
+import { ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
-type Config = { errorMessages: Object };
-type Props = { config: Config };
+function ScenarioEditor() {
 
-
-function ScenarioEditor({ config }: Props) {
+  const { globalVariables, setGlobalVariables } = useGlobalVariables();
+  const params = new URLSearchParams(window.location.search);
+  const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
+  const ros = new ROSLIB.Ros({ url: websocketUrl });
 
   const [scenarios, setScenarios] = useState([]);
+  const [checkpoints, setCheckpoints] = useState([]);
 
-  const onDrop = ({ removedIndex, addedIndex }) => {
-    setScenarios(scenarios => arrayMove(scenarios, removedIndex, addedIndex))
-  };
+  useEffect(() => {
+    setGlobalVariables({ clickedWaypointId: null, clickedWaypointPosition: null });
+  }, []);
 
   return (
     <Flex col style={{ height: "100%" }}>
@@ -39,37 +42,24 @@ function ScenarioEditor({ config }: Props) {
       <div style={{ padding: 10, fontSize: 16 }}>
         <span>シナリオ作成</span>
       </div>
-      {
-        scenarios.length > 0 ?
-          <List>
-            <Container dragHandleSelector=".drag-handle" lockAxis="y" onDrop={onDrop}>
-            {
-              scenarios.map((scenario, index) =>
-                <Draggable key={index}>
-                  <Scenario key={index} scenario={scenario} />
-                </Draggable>
-              )
-            }
-            </Container>
-          </List>
-          :
-          <div>
-            <CSVReader
-              onFileLoaded={(data) => { setScenarios(data); console.log(data); }}
-              parserOptions={{
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true,
-              }}
-            />
-          </div>
-      }
+      <VectorMapLoader
+        ros={ros}
+      />
+      <CheckpointHandler
+        ros={ros}
+        checkpoints={checkpoints}
+        setCheckpoints={setCheckpoints}
+        clickedWaypoint={{ id: globalVariables.clickedWaypointId, position: globalVariables.clickedWaypointPosition }}
+      />
+      <WaypointHandler
+        ros={ros}
+      />
     </Flex>
   );
 
 }
 
 ScenarioEditor.panelType = "ScenarioEditor";
-ScenarioEditor.defaultConfig = { errorMessages: {} };
+ScenarioEditor.defaultConfig = {};
 
-export default hot(Panel<Config>(ScenarioEditor));
+export default hot(Panel<{}>(ScenarioEditor));

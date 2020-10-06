@@ -44,6 +44,7 @@ export function panelsByCategory() {
   const NDTMonitor = require("webviz-core/src/panels/NDTMonitor").default;
   const SteeringWheel = require("webviz-core/src/panels/SteeringWheel").default;
   const SpeedMeter = require("webviz-core/src/panels/SpeedMeter").default;
+  const ScenarioEditor = require("webviz-core/src/panels/ScenarioEditor").default;
   const { ndash } = require("webviz-core/src/util/entities");
 
   const ros = [
@@ -77,6 +78,7 @@ export function panelsByCategory() {
     { title: "Error Messages Offline", component: ErrorMessagesOffline },
     { title: "Error Messages Online", component: ErrorMessagesOnline },
     { title: "Traffic Light", component: TrafficLight },
+    { title: "Scenario Editor", component: ScenarioEditor },
   ]
 
   const debugging = [
