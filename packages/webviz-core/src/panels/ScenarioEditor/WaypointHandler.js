@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import CSVReader from 'react-csv-reader';
 
-function WaypointHandler({ ros }) {
+function WaypointHandler({ ros, waypoints, setWaypoints }) {
 
-  const onLoadWaypoints = (waypoints) => {
-    // publish waypoints
+  const publishMarkers = () => {
     const markers = waypoints.map((waypoint, index) => (
       {
         header: {
@@ -47,10 +46,6 @@ function WaypointHandler({ ros }) {
         mesh_use_embedded_materials: false,
       }
     ));
-    publishWaypointMarkers(markers);
-  }
-
-  const publishWaypointMarkers = (markers) => {
     const markerPublisher = new ROSLIB.Topic({
       ros: ros,
       name: '/scenario_editor/markers',
@@ -63,10 +58,14 @@ function WaypointHandler({ ros }) {
     markerPublisher.publish(message);
   }
 
+  useEffect(() => {
+    publishMarkers();
+  }, [waypoints])
+
   return (
     <div>
       <CSVReader
-        onFileLoaded={onLoadWaypoints}
+        onFileLoaded={(data) => setWaypoints(data)}
         parserOptions={{
           header: true,
           dynamicTyping: true,

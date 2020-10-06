@@ -31,6 +31,7 @@ function ScenarioEditor() {
 
   const [scenarios, setScenarios] = useState([]);
   const [checkpoints, setCheckpoints] = useState([]);
+  const [waypoints, setWaypoints] = useState([]);
 
   useEffect(() => {
     setGlobalVariables({ clickedWaypointId: null, clickedWaypointPosition: null });
@@ -49,10 +50,13 @@ function ScenarioEditor() {
         ros={ros}
         checkpoints={checkpoints}
         setCheckpoints={setCheckpoints}
-        clickedWaypoint={{ id: globalVariables.clickedWaypointId, position: globalVariables.clickedWaypointPosition }}
+        waypoints={waypoints}
+        clickedWaypoint={{ id: globalVariables.clickedWaypointId }}
       />
       <WaypointHandler
         ros={ros}
+        waypoints={waypoints}
+        setWaypoints={setWaypoints}
       />
     </Flex>
   );
