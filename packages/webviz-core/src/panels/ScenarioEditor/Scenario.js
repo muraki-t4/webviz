@@ -15,7 +15,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import Checkbox from '@material-ui/core/Checkbox';
 
 
-function Scenario({ scenario, id_score }) {
+function Scenario({ index, scenario, id_score, updateScenarios }) {
 
   const [open, setOpen] = useState(false);
 
@@ -26,19 +26,21 @@ function Scenario({ scenario, id_score }) {
         <DeleteIcon onClick={(e) => { alert(1); e.preventDefault(); }} />
       </ListItem>
       <ScenarioDialog
+        index={index}
         scenario={scenario}
         id_score={id_score}
         open={open}
+        updateScenarios={updateScenarios}
         handleClose={() => setOpen(false)}
       />
     </div>
   )
 }
 
-function ScenarioDialog({ scenario, id_score, open, handleClose }) {
+function ScenarioDialog({ index, scenario, id_score, open, handleClose, updateScenarios }) {
 
-  const handleClickCheckbox = (key, value) => () => {
-    console.log(key, value);
+  const handleItemValueChaned = (key, value) => {
+    updateScenarios(index, { ...scenario, [key]: value })
   }
 
   return (
@@ -46,16 +48,19 @@ function ScenarioDialog({ scenario, id_score, open, handleClose }) {
       open={open}
       onClose={handleClose}
       scroll={'paper'}
+      fullWidth={true}
+      maxWidth={'sm'}
+      style={{ maxHeight: 800 }}
     >
       <DialogTitle>シナリオ修正</DialogTitle>
       <DialogContent dividers={true}>
-        <List dense={true} style={{ fontSize: 16 }}>
-          {Object.entries(scenario).map(([key, value]) =>
+        <List dense={true}>
+          {Object.keys(scenario).map(key =>
             <ScenarioItem
               key={key}
               id_score={id_score}
-              item={{ key, value }}
-              handleClickCheckbox={handleClickCheckbox}
+              item={{ key: key, value: scenario[key] }}
+              handleItemValueChaned={handleItemValueChaned}
             />
           )}
         </List>
@@ -69,7 +74,7 @@ function ScenarioDialog({ scenario, id_score, open, handleClose }) {
   );
 }
 
-function ScenarioItem({ item, id_score, handleClickCheckbox }) {
+function ScenarioItem({ item, id_score, handleItemValueChaned }) {
 
   const label = [
     ...id_score,
@@ -81,16 +86,17 @@ function ScenarioItem({ item, id_score, handleClickCheckbox }) {
   return (
     ["start_id", "end_id", "speed_limit"].includes(item.key) ?
       <ListItem>
-        <ListItemText primary={label} />
+        <ListItemText primary={label} style={{ fontSize: 20 }} />
         <TextField
           type="number"
           value={item.value}
-          style={{ paddingLeft: 10 }}
+          style={{ paddingLeft: 20 }}
+          onChange={e => handleItemValueChaned(item.key, parseInt(e.target.value))}
         />
       </ListItem>
       :
-      <ListItem button onClick={handleClickCheckbox(item.key, item.value)}>
-        <ListItemText primary={label} />
+      <ListItem button onClick={() => handleItemValueChaned(item.key, (item.value === 1) ? 0 : 1)}>
+        <ListItemText primary={label} style={{ fontSize: 20 }} />
         <ListItemSecondaryAction>
           <Checkbox
             edge="end"

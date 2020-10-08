@@ -29,8 +29,15 @@ function ScenarioHandler({ scenarios, setScenarios, id_score, clickedWaypointId 
     }
   }
 
+  const updateScenarios = (index, scenario) => {
+    const _scenarios = scenarios.slice();
+    _scenarios[index] = scenario;
+    console.log(_scenarios, scenarios);
+    setScenarios(_scenarios);
+  }
+
   useEffect(() => {
-    const _defaultScenario = { speed_limit: 30 }
+    const _defaultScenario = { start_id: null, end_id: null, speed_limit: 30 }
     for (const elem of id_score) {
       _defaultScenario[elem.contents] = 0;
     }
@@ -39,13 +46,21 @@ function ScenarioHandler({ scenarios, setScenarios, id_score, clickedWaypointId 
 
   useEffect(() => {
     // add new scenario
-    if (clickedWaypointId) addNewScenario(clickedWaypointId);
+    if (clickedWaypointId && id_score.length > 0) addNewScenario(clickedWaypointId);
   }, [clickedWaypointId])
 
   return (
     scenarios.length > 0 ?
       <List style={{ overflow: 'auto' }}>
-        {scenarios.map((scenario, index) => <Scenario key={index} scenario={scenario} id_score={id_score} />)}
+        {scenarios.map((scenario, index) =>
+          <Scenario
+            key={index}
+            index={index}
+            scenario={scenario}
+            id_score={id_score}
+            updateScenarios={updateScenarios}
+          />
+        )}
       </List>
       :
       <div>
