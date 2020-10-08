@@ -7,31 +7,22 @@ import Scenario from "./Scenario";
 function ScenarioHandler({ scenarios, setScenarios, clickedWaypointId }) {
 
   const addNewScenario = (waypointId) => {
-    let newScenario = {
-      speed_limit: 30,
-    };
-    // ignore duplicate waypoint
-    if (scenarios.filter(scenario => scenario.start_id === waypointId).length > 0) return false;
-    // insert first
-    if (scenarios.filter(scenario => waypointId > scenario.start_id).length === 0) {
-      newScenario.start_id = 0;
-      newScenario.end_id = waypointId;
-    }
-    else {
-      for (const [index, scenario] of scenarios.entries()) {
-        // insert between
-        if (scenario.start_id > waypointId) {
-          newScenario = { ...scenarios[index - 1] };
-          newScenario.start_id = scenario.end_id;
-          newScenario.end_id = waypointId;
-          scenario.start_id = waypointId;
-          break;
-        }
+
+    let newScenario = { ...scenarios[scenarios.length - 1] || {} };
+    newScenario.start_id = newScenario.end_id || 0;
+    newScenario.end_id = waypointId;
+
+    console.log(scenarios, waypointId);
+
+    for (const scenario of scenarios) {
+      console.log(scenario, waypointId);
+      if (scenario.end_id === waypointId) return false;
+      if (scenario.end_id > waypointId && waypointId > scenario.start_id) {
+        newScenario = { ...scenario };
+        newScenario.end_id = waypointId;
+        scenario.start_id = waypointId;
+        break;
       }
-      // insert last
-      newScenario = { ...scenarios[scenarios.length - 1] };
-      newScenario.start_id = newScenario.end_id;
-      newScenario.end_id = waypointId;
     }
     if (newScenario.hasOwnProperty("start_id") && newScenario.hasOwnProperty("end_id")) {
       const sortedScenarios = [...scenarios, newScenario].slice().sort((a, b) => (a.start_id > b.start_id) ? 1 : (b.start_id > a.start_id) ? -1 : 0);
@@ -46,7 +37,7 @@ function ScenarioHandler({ scenarios, setScenarios, clickedWaypointId }) {
 
   return (
     scenarios.length > 0 ?
-      <List style={{ overflow: 'scroll' }}>
+      <List style={{ overflow: 'auto' }}>
         {scenarios.map((scenario, index) => <Scenario key={index} scenario={scenario} />)}
       </List>
       :
