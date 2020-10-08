@@ -1,21 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import List from '@material-ui/core/List';
 import CSVReader from 'react-csv-reader';
 
 import Scenario from "./Scenario";
 
-function ScenarioHandler({ scenarios, setScenarios, clickedWaypointId }) {
+function ScenarioHandler({ scenarios, setScenarios, id_score, clickedWaypointId }) {
+
+  const defaultScenario = useRef({});
 
   const addNewScenario = (waypointId) => {
 
-    let newScenario = { ...scenarios[scenarios.length - 1] || {} };
+    let newScenario = { ...defaultScenario.current, ...scenarios[scenarios.length - 1] };
     newScenario.start_id = newScenario.end_id || 0;
     newScenario.end_id = waypointId;
 
-    console.log(scenarios, waypointId);
-
     for (const scenario of scenarios) {
-      console.log(scenario, waypointId);
       if (scenario.end_id === waypointId) return false;
       if (scenario.end_id > waypointId && waypointId > scenario.start_id) {
         newScenario = { ...scenario };
@@ -31,6 +30,14 @@ function ScenarioHandler({ scenarios, setScenarios, clickedWaypointId }) {
   }
 
   useEffect(() => {
+    const _defaultScenario = { speed_limit: 30 }
+    for (const elem of id_score) {
+      _defaultScenario[elem.contents] = 0;
+    }
+    defaultScenario.current = _defaultScenario;
+  }, [id_score])
+
+  useEffect(() => {
     // add new scenario
     if (clickedWaypointId) addNewScenario(clickedWaypointId);
   }, [clickedWaypointId])
@@ -38,7 +45,7 @@ function ScenarioHandler({ scenarios, setScenarios, clickedWaypointId }) {
   return (
     scenarios.length > 0 ?
       <List style={{ overflow: 'auto' }}>
-        {scenarios.map((scenario, index) => <Scenario key={index} scenario={scenario} />)}
+        {scenarios.map((scenario, index) => <Scenario key={index} scenario={scenario} id_score={id_score} />)}
       </List>
       :
       <div>

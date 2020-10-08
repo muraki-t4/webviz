@@ -9,17 +9,13 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
+import TextField from '@material-ui/core/TextField';
 
 import DeleteIcon from '@material-ui/icons/Delete';
 import Checkbox from '@material-ui/core/Checkbox';
 
-const useStyles = makeStyles((theme) => ({
-  nested: {
-    paddingLeft: theme.spacing(4),
-  },
-}));
 
-function Scenario({ scenario }) {
+function Scenario({ scenario, id_score }) {
 
   const [open, setOpen] = useState(false);
 
@@ -29,12 +25,17 @@ function Scenario({ scenario }) {
         <ListItemText primary={`${scenario.start_id} - ${scenario.end_id}`} />
         <DeleteIcon onClick={(e) => { alert(1); e.preventDefault(); }} />
       </ListItem>
-      <ScenarioDialog scenario={scenario} open={open} handleClose={() => setOpen(false)} />
+      <ScenarioDialog
+        scenario={scenario}
+        id_score={id_score}
+        open={open}
+        handleClose={() => setOpen(false)}
+      />
     </div>
   )
 }
 
-function ScenarioDialog({ scenario, open, handleClose }) {
+function ScenarioDialog({ scenario, id_score, open, handleClose }) {
 
   const handleClickCheckbox = (key, value) => () => {
     console.log(key, value);
@@ -48,8 +49,15 @@ function ScenarioDialog({ scenario, open, handleClose }) {
     >
       <DialogTitle>シナリオ修正</DialogTitle>
       <DialogContent dividers={true}>
-        <List dense={true}>
-          {Object.entries(scenario).map(([key, value]) => <ScenarioItem key={key} item={{ key, value }} handleClickCheckbox={handleClickCheckbox} />)}
+        <List dense={true} style={{ fontSize: 16 }}>
+          {Object.entries(scenario).map(([key, value]) =>
+            <ScenarioItem
+              key={key}
+              id_score={id_score}
+              item={{ key, value }}
+              handleClickCheckbox={handleClickCheckbox}
+            />
+          )}
         </List>
       </DialogContent>
       <DialogActions>
@@ -61,22 +69,32 @@ function ScenarioDialog({ scenario, open, handleClose }) {
   );
 }
 
-function ScenarioItem({ item, handleClickCheckbox }) {
+function ScenarioItem({ item, id_score, handleClickCheckbox }) {
 
-  const classes = useStyles();
+  const label = [
+    ...id_score,
+    { "contents": "start_id", "message": "シナリオ始点" },
+    { "contents": "end_id", "message": "シナリオ終点" },
+    { "contents": "speed_limit", "message": "上限速度" },
+  ].filter(elem => elem.contents === item.key)[0].message || "該当なし";
 
   return (
     ["start_id", "end_id", "speed_limit"].includes(item.key) ?
-      <ListItem button className={classes.nested}>
-        <ListItemText primary={item.key} />
+      <ListItem>
+        <ListItemText primary={label} />
+        <TextField
+          type="number"
+          value={item.value}
+          style={{ paddingLeft: 10 }}
+        />
       </ListItem>
       :
-      <ListItem button className={classes.nested} onClick={handleClickCheckbox(item.key, item.value)}>
-        <ListItemText primary={item.key} />
+      <ListItem button onClick={handleClickCheckbox(item.key, item.value)}>
+        <ListItemText primary={label} />
         <ListItemSecondaryAction>
           <Checkbox
             edge="end"
-            checked={item.value}
+            checked={item.value === 1}
             tabIndex={-1}
             disableRipple
           />

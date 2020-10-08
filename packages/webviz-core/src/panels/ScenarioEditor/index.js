@@ -14,6 +14,7 @@ import ROSLIB from "roslib";
 import ScenarioHandler from './ScenarioHandler';
 import CheckpointHandler from './CheckpointHandler';
 import WaypointHandler from './WaypointHandler';
+import IDScoreHandler from './IDScoreHandler';
 
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
@@ -33,6 +34,7 @@ function ScenarioEditor() {
   const [scenarios, setScenarios] = useState([]);
   const [checkpoints, setCheckpoints] = useState([]);
   const [waypoints, setWaypoints] = useState([]);
+  const [id_score, setIdScore] = useState([]);
 
   return (
     <Flex col style={{ height: "100%" }}>
@@ -46,6 +48,7 @@ function ScenarioEditor() {
       <ScenarioHandler
         scenarios={scenarios}
         setScenarios={setScenarios}
+        id_score={id_score}
         clickedWaypointId={globalVariables.clickedWaypointId}
       />
       <CheckpointHandler
@@ -59,6 +62,10 @@ function ScenarioEditor() {
         ros={ros}
         waypoints={waypoints}
         setWaypoints={setWaypoints}
+      />
+      <IDScoreHandler
+        id_score={id_score}
+        setIdScore={setIdScore}
       />
     </Flex>
   );
