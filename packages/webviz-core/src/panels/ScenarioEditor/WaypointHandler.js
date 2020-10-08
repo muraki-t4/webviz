@@ -12,7 +12,7 @@ function WaypointHandler({ ros, waypoints, setWaypoints }) {
         },
         ns: "waypoints",
         id: index,
-        type: 9,
+        type: 2,
         action: 0,
         pose: {
           position: {
@@ -28,12 +28,12 @@ function WaypointHandler({ ros, waypoints, setWaypoints }) {
           }
         },
         scale: {
-          x: 1,
-          y: 1,
-          z: 1,
+          x: 0.3,
+          y: 0.3,
+          z: 0.3,
         },
         color: {
-          a: 1.0,
+          a: 0.6,
           r: 0.0,
           g: 1.0,
           b: 0.0,
@@ -41,7 +41,6 @@ function WaypointHandler({ ros, waypoints, setWaypoints }) {
         frame_locked: true,
         points: [],
         colors: [],
-        text: "*",
         mesh_resource: '',
         mesh_use_embedded_materials: false,
       }
@@ -64,14 +63,16 @@ function WaypointHandler({ ros, waypoints, setWaypoints }) {
 
   return (
     <div>
-      <CSVReader
-        onFileLoaded={(data) => setWaypoints(data)}
-        parserOptions={{
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-        }}
-      />
+      { waypoints.length === 0 &&
+        <CSVReader
+          onFileLoaded={(data) => setWaypoints(data)}
+          parserOptions={{
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+          }}
+        />
+      }
     </div>
   )
 }

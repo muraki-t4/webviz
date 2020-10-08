@@ -11,6 +11,7 @@ import React, { useState, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
 import ROSLIB from "roslib";
 
+import ScenarioHandler from './ScenarioHandler';
 import CheckpointHandler from './CheckpointHandler';
 import WaypointHandler from './WaypointHandler';
 
@@ -24,7 +25,7 @@ import { ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY } from "webviz-core/src/util/globalCo
 
 function ScenarioEditor() {
 
-  const { globalVariables, setGlobalVariables } = useGlobalVariables();
+  const { globalVariables } = useGlobalVariables();
   const params = new URLSearchParams(window.location.search);
   const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
   const ros = new ROSLIB.Ros({ url: websocketUrl });
@@ -32,10 +33,6 @@ function ScenarioEditor() {
   const [scenarios, setScenarios] = useState([]);
   const [checkpoints, setCheckpoints] = useState([]);
   const [waypoints, setWaypoints] = useState([]);
-
-  useEffect(() => {
-    setGlobalVariables({ clickedWaypointId: null, clickedWaypointPosition: null });
-  }, []);
 
   return (
     <Flex col style={{ height: "100%" }}>
@@ -45,6 +42,11 @@ function ScenarioEditor() {
       </div>
       <VectorMapLoader
         ros={ros}
+      />
+      <ScenarioHandler
+        scenarios={scenarios}
+        setScenarios={setScenarios}
+        clickedWaypointId={globalVariables.clickedWaypointId}
       />
       <CheckpointHandler
         ros={ros}

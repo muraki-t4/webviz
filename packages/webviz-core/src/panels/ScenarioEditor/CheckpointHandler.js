@@ -14,7 +14,6 @@ function CheckpointHandler({ ros, checkpoints, setCheckpoints, waypoints, clicke
       };
       setCheckpoints([...checkpoints, checkpoint]);
     }
-    // setCheckpoints([...checkpoints, checkpoint].slice().sort((a, b) => (a.id > b.id) ? 1 : (b.id > a.id) ? -1 : 0));
   }
 
   const publishMarkers = () => {
@@ -41,9 +40,9 @@ function CheckpointHandler({ ros, checkpoints, setCheckpoints, waypoints, clicke
           }
         },
         scale: {
-          x: 2,
-          y: 2,
-          z: 1,
+          x: 0.5,
+          y: 0.5,
+          z: 0.5,
         },
         color: {
           a: 1.0,
@@ -54,7 +53,7 @@ function CheckpointHandler({ ros, checkpoints, setCheckpoints, waypoints, clicke
         frame_locked: true,
         points: [],
         colors: [],
-        // text: "+",
+        text: `${checkpoint.id}`,
         mesh_resource: '',
         mesh_use_embedded_materials: false,
       }
