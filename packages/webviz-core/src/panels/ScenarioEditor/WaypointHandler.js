@@ -28,9 +28,9 @@ function WaypointHandler({ ros, waypoints, setWaypoints }) {
           }
         },
         scale: {
-          x: 0.3,
-          y: 0.3,
-          z: 0.3,
+          x: 0.5,
+          y: 0.5,
+          z: 0.5,
         },
         color: {
           a: 0.6,

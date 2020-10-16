@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -23,7 +22,7 @@ function Scenario({ index, scenario, id_score, updateScenarios }) {
     <div>
       <ListItem button onClick={() => setOpen(prevOpen => !prevOpen)} >
         <ListItemText primary={`${scenario.start_id} - ${scenario.end_id}`} />
-        <DeleteIcon onClick={(e) => { alert(1); e.preventDefault(); }} />
+        <DeleteIcon onClick={(e) => { e.preventDefault(); updateScenarios(index, null); }} />
       </ListItem>
       <ScenarioDialog
         index={index}

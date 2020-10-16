@@ -48,6 +48,7 @@ function ScenarioEditor() {
       <ScenarioHandler
         scenarios={scenarios}
         setScenarios={setScenarios}
+        setCheckpoints={setCheckpoints}
         id_score={id_score}
         clickedWaypointId={globalVariables.clickedWaypointId}
       />
@@ -56,7 +57,7 @@ function ScenarioEditor() {
         checkpoints={checkpoints}
         setCheckpoints={setCheckpoints}
         waypoints={waypoints}
-        clickedWaypoint={{ id: globalVariables.clickedWaypointId }}
+        clickedWaypointId={globalVariables.clickedWaypointId}
       />
       <WaypointHandler
         ros={ros}

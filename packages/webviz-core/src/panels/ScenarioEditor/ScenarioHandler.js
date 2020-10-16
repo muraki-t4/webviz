@@ -4,7 +4,7 @@ import CSVReader from 'react-csv-reader';
 
 import Scenario from "./Scenario";
 
-function ScenarioHandler({ scenarios, setScenarios, id_score, clickedWaypointId }) {
+function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, clickedWaypointId }) {
 
   const defaultScenario = useRef({});
 
@@ -31,8 +31,15 @@ function ScenarioHandler({ scenarios, setScenarios, id_score, clickedWaypointId 
 
   const updateScenarios = (index, scenario) => {
     const _scenarios = scenarios.slice();
-    _scenarios[index] = scenario;
-    console.log(_scenarios, scenarios);
+    if (scenario === null) {
+      // delete scenario and checkpoint
+      const checkpointId = _scenarios[index].end_id;
+      _scenarios.splice(index, 1);
+      setCheckpoints(prevCheckpoints => prevCheckpoints.filter((checkpoint) => checkpoint.id !== checkpointId));
+    } else {
+      // update scenario
+      _scenarios[index] = scenario;
+    }
     setScenarios(_scenarios);
   }
 

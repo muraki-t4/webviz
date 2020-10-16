@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import CSVReader from 'react-csv-reader';
 
-function CheckpointHandler({ ros, checkpoints, setCheckpoints, waypoints, clickedWaypoint }) {
+function CheckpointHandler({ ros, checkpoints, setCheckpoints, waypoints, clickedWaypointId }) {
 
   const addCheckpoint = (waypointId) => {
     if (checkpoints.filter(checkpoint => checkpoint.id === waypointId).length > 0) return;
@@ -40,8 +40,8 @@ function CheckpointHandler({ ros, checkpoints, setCheckpoints, waypoints, clicke
           }
         },
         scale: {
-          x: 0.5,
-          y: 0.5,
+          x: 0.7,
+          y: 0.7,
           z: 0.5,
         },
         color: {
@@ -71,8 +71,8 @@ function CheckpointHandler({ ros, checkpoints, setCheckpoints, waypoints, clicke
   }
 
   useEffect(() => {
-    if (clickedWaypoint.id) addCheckpoint(clickedWaypoint.id);
-  }, [clickedWaypoint]);
+    if (clickedWaypointId) addCheckpoint(clickedWaypointId);
+  }, [clickedWaypointId]);
 
   useEffect(() => {
     publishMarkers();
