@@ -33,9 +33,9 @@ function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, cl
     const _scenarios = scenarios.slice();
     if (scenario === null) {
       // delete scenario and checkpoint
-      const checkpointId = _scenarios[index].end_id;
+      const deletedCheckpointId = _scenarios[index].end_id;
       _scenarios.splice(index, 1);
-      setCheckpoints(prevCheckpoints => prevCheckpoints.filter((checkpoint) => checkpoint.id !== checkpointId));
+      setCheckpoints(prevCheckpoints => prevCheckpoints.filter((checkpoint) => checkpoint.id !== deletedCheckpointId));
     } else {
       // update scenario
       _scenarios[index] = scenario;

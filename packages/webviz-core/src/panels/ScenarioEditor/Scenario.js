@@ -49,7 +49,6 @@ function ScenarioDialog({ index, scenario, id_score, open, handleClose, updateSc
       scroll={'paper'}
       fullWidth={true}
       maxWidth={'sm'}
-      style={{ maxHeight: 800 }}
     >
       <DialogTitle>シナリオ修正</DialogTitle>
       <DialogContent dividers={true}>
