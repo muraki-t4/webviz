@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { hot } from "react-hot-loader/root";
 import ROSLIB from "roslib";
 
@@ -53,11 +53,11 @@ function ScenarioEditor() {
         clickedWaypointId={globalVariables.clickedWaypointId}
       />
       <CheckpointHandler
-        ros={ros}
         checkpoints={checkpoints}
         setCheckpoints={setCheckpoints}
         waypoints={waypoints}
         clickedWaypointId={globalVariables.clickedWaypointId}
+        ros={ros}
       />
       <WaypointHandler
         ros={ros}

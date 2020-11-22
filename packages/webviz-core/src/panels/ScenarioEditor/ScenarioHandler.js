@@ -30,17 +30,19 @@ function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, cl
   }
 
   const updateScenarios = (index, scenario) => {
-    const _scenarios = scenarios.slice();
+    let prevScenarios = scenarios.slice();
     if (scenario === null) {
-      // delete scenario and checkpoint
-      const deletedCheckpointId = _scenarios[index].end_id;
-      _scenarios.splice(index, 1);
+      const deletedCheckpointId = scenarios[index].end_id;
+      // delete checkpoint
       setCheckpoints(prevCheckpoints => prevCheckpoints.filter((checkpoint) => checkpoint.id !== deletedCheckpointId));
+      // delete scenario and reorder
+      prevScenarios[index + 1].start_id = prevScenarios[index].start_id;
+      prevScenarios = prevScenarios.filter((_, i) => i !== index);
     } else {
       // update scenario
-      _scenarios[index] = scenario;
+      prevScenarios[index] = scenario;
     }
-    setScenarios(_scenarios);
+    setScenarios(prevScenarios);
   }
 
   useEffect(() => {

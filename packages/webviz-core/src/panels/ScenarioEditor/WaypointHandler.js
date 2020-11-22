@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import CSVReader from 'react-csv-reader';
 
 function WaypointHandler({ ros, waypoints, setWaypoints }) {
+
+  const publisher = useRef(null);
 
   const publishMarkers = () => {
     const markers = waypoints.map((waypoint, index) => (
@@ -45,21 +47,25 @@ function WaypointHandler({ ros, waypoints, setWaypoints }) {
         mesh_use_embedded_materials: false,
       }
     ));
-    const markerPublisher = new ROSLIB.Topic({
+    const message = new ROSLIB.Message({
+      markers: markers
+    });
+    if (publisher.current !== null) publisher.current.publish(message);
+  }
+
+  useEffect(() => {
+    publishMarkers();
+  }, [waypoints]);
+
+  useEffect(() => {
+    publisher.current = new ROSLIB.Topic({
       ros: ros,
       name: '/scenario_editor/markers',
       messageType: 'visualization_msgs/MarkerArray',
       latch: true,
     });
-    const message = new ROSLIB.Message({
-      markers: markers
-    });
-    markerPublisher.publish(message);
-  }
-
-  useEffect(() => {
-    publishMarkers();
-  }, [waypoints])
+    return () => publisher.current.unadvertise();
+  }, [ros]);
 
   return (
     <div>

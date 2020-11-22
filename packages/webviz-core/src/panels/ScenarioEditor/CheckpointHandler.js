@@ -1,7 +1,7 @@
-import React, { useRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import CSVReader from 'react-csv-reader';
 
-function CheckpointHandler({ ros, checkpoints, setCheckpoints, waypoints, clickedWaypointId }) {
+function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWaypointId, ros }) {
 
   const publisher = useRef(null);
 
@@ -122,9 +122,10 @@ function CheckpointHandler({ ros, checkpoints, setCheckpoints, waypoints, clicke
       ros: ros,
       name: '/scenario_editor/checkpoints',
       messageType: 'visualization_msgs/MarkerArray',
-      queue_size: 1,
       latch: true,
     });
+    publisher.current.advertise();
+    return () => publisher.current.unadvertise();
   }, [ros]);
 
   return (

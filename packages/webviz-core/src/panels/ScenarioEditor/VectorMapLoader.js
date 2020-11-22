@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 
 function VectorMapLoader({ ros }) {
 
@@ -12,6 +12,7 @@ function VectorMapLoader({ ros }) {
     });
     const message = new ROSLIB.Message(vectorMap);
     publisher.publish(message);
+    return () => publisher.unadvertise();
   }, [ros]);
 
   return null;
