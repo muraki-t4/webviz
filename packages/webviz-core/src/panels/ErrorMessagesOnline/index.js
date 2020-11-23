@@ -7,9 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
-import styled from "styled-components";
 
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
@@ -24,7 +23,7 @@ type Props = { config: Config };
 function ErrorMessagesOnline({ config }: Props) {
 
   const params = new URLSearchParams(window.location.search);
-  const topicMessages = useMessagesByTopic({ topics: ["/error_vis"], historySize: 1 })["/error_vis"] || [];
+  const topicMessages = useMessagesByTopic({ topics: ["/error_vis"], historySize: 1 })["/error_vis"];
 
   const [items, setItems] = useState([]);
   const [messages, setMessages] = useState({});
@@ -34,13 +33,20 @@ function ErrorMessagesOnline({ config }: Props) {
     try {
       const errorMessageUrl = params.get("error-message-url");
       const res = await fetch(errorMessageUrl);
-      setMessages(res.json());
+      const data = await res.json();
+      setMessages(data);
     } catch (error) {
       setError(error);
     }
   }
 
-  useEffect(getErrorMessages, [params]);
+  const sortByTimestamp = (a, b) => {
+    return (parseInt(a.id) > parseInt(b.id)) ? -1 : ((parseInt(b.id) > parseInt(a.id)) ? 1 : 0);
+  }
+
+  useEffect(() => {
+    getErrorMessages();
+  }, []);
 
   useEffect(() => {
     for (const { message } of topicMessages) {
@@ -48,6 +54,8 @@ function ErrorMessagesOnline({ config }: Props) {
       if (messages.hasOwnProperty(errorid)) {
         const item = { id: startid, text: messages[errorid] };
         setItems([...items, item]);
+        const audio = new Audio("/audios/alert.mp3");
+        audio.play().catch((e) => console.error(e));
       }
     }
   }, [topicMessages]);
@@ -55,12 +63,12 @@ function ErrorMessagesOnline({ config }: Props) {
   return (
     <Flex col style={{ height: "100%" }}>
       <PanelToolbar helpContent={helpContent} floating />
-      <div style={{ padding: 10, fontSize: 16 }}>
+      <div style={{ padding: 10, fontSize: 18 }}>
         <span>検定結果一覧</span>
       </div>
       <LogList
-        style={{ overflow: 'scroll', paddingBottom: 20 }}
-        items={items}
+        style={{ overflow: 'scroll' }}
+        items={items.sort(sortByTimestamp)}
         renderRow={({ item, style }) => (
           <div
             style={{
@@ -68,7 +76,7 @@ function ErrorMessagesOnline({ config }: Props) {
               display: "flex",
               flexDirection: "column",
               padding: 8,
-              fontSize: 14,
+              fontSize: 18,
             }}
             key={item.id}
           >
@@ -79,8 +87,9 @@ function ErrorMessagesOnline({ config }: Props) {
           </div>
         )}
       />
-      {error &&
-        <div style={{ padding: 8, fontSize: 14 }}>
+      {
+        error &&
+        <div style={{ padding: 8, fontSize: 16 }}>
           <p style={{ color: "orange" }}>エラーメッセージ一覧が取得できませんでした</p>
         </div>
       }

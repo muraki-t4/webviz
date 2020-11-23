@@ -23,10 +23,10 @@
       "transformMarkers": true,
       "synchronize": false,
       "mode": "fit",
-      "zoomPercentage": 47.03125,
+      "zoomPercentage": 42.96875,
       "offset": [
         0,
-        87.125
+        62.875
       ]
     },
     "ImageViewPanel!40whxgd": {
@@ -37,10 +37,10 @@
       "transformMarkers": true,
       "synchronize": false,
       "mode": "fit",
-      "zoomPercentage": 47.03125,
+      "zoomPercentage": 42.96875,
       "offset": [
         0,
-        87.125
+        62.875
       ]
     },
     "3D Panel!1my2ydk": {
@@ -54,7 +54,7 @@
         "name:Topics",
         "t:/waypoint_saver_marker",
         "t:/ego_waypoint",
-        "t:/vector_map"
+        "t:/vector_map_republished"
       ],
       "expandedKeys": [
         "name:Topics"
