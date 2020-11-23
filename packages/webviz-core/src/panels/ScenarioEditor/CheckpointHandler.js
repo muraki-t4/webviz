@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import CSVReader from 'react-csv-reader';
+import Typography from "@material-ui/core/Typography";
 
 function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWaypointId, ros }) {
 
@@ -129,18 +130,18 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
   }, [ros]);
 
   return (
-    <div>
-      { checkpoints.length === 0 &&
-        <CSVReader
-          onFileLoaded={(data) => setCheckpoints(data)}
-          parserOptions={{
-            header: true,
-            dynamicTyping: true,
-            skipEmptyLines: true,
-          }}
-        />
-      }
-    </div>
+    checkpoints.length === 0 &&
+    <>
+      <Typography variant="subtitle1">checkpoint.csv</Typography>
+      <CSVReader
+        onFileLoaded={(data) => setCheckpoints(data)}
+        parserOptions={{
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+        }}
+      />
+    </>
   )
 }
 

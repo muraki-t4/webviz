@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import List from '@material-ui/core/List';
 import CSVReader from 'react-csv-reader';
-
+import Typography from '@material-ui/core/Typography';
 import Scenario from "./Scenario";
 
 function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, clickedWaypointId }) {
@@ -73,6 +73,7 @@ function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, cl
       </List>
       :
       <div>
+        <Typography variant="subtitle1">scenario.csv</Typography>
         <CSVReader
           onFileLoaded={(data) => setScenarios(data)}
           parserOptions={{

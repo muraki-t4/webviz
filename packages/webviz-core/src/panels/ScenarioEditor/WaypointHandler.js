@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from "react";
+import Typography from '@material-ui/core/Typography';
 import CSVReader from 'react-csv-reader';
 
 function WaypointHandler({ ros, waypoints, setWaypoints }) {
@@ -68,18 +69,18 @@ function WaypointHandler({ ros, waypoints, setWaypoints }) {
   }, [ros]);
 
   return (
-    <div>
-      { waypoints.length === 0 &&
-        <CSVReader
-          onFileLoaded={(data) => setWaypoints(data)}
-          parserOptions={{
-            header: true,
-            dynamicTyping: true,
-            skipEmptyLines: true,
-          }}
-        />
-      }
-    </div>
+    waypoints.length === 0 &&
+    <>
+      <Typography variant="subtitle1">waypoint.csv</Typography>
+      <CSVReader
+        onFileLoaded={(data) => setWaypoints(data)}
+        parserOptions={{
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+        }}
+      />
+    </>
   )
 }
 

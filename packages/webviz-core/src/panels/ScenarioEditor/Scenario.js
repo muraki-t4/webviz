@@ -9,8 +9,6 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
-
-import DeleteIcon from '@material-ui/icons/Delete';
 import Checkbox from '@material-ui/core/Checkbox';
 
 
@@ -22,7 +20,6 @@ function Scenario({ index, scenario, id_score, updateScenarios }) {
     <div>
       <ListItem button onClick={() => setOpen(prevOpen => !prevOpen)} >
         <ListItemText primary={`${scenario.start_id} - ${scenario.end_id}`} />
-        <DeleteIcon onClick={(e) => { e.preventDefault(); updateScenarios(index, null); }} />
       </ListItem>
       <ScenarioDialog
         index={index}
@@ -40,6 +37,10 @@ function ScenarioDialog({ index, scenario, id_score, open, handleClose, updateSc
 
   const handleItemValueChaned = (key, value) => {
     updateScenarios(index, { ...scenario, [key]: value })
+  }
+
+  const deleteScenario = () => {
+    updateScenarios(index, null);
   }
 
   return (
@@ -64,6 +65,9 @@ function ScenarioDialog({ index, scenario, id_score, open, handleClose, updateSc
         </List>
       </DialogContent>
       <DialogActions>
+        <Button onClick={deleteScenario} color="primary">
+          削除
+        </Button>
         <Button onClick={handleClose} color="primary">
           更新
         </Button>
@@ -84,7 +88,7 @@ function ScenarioItem({ item, id_score, handleItemValueChaned }) {
   return (
     ["start_id", "end_id", "speed_limit"].includes(item.key) ?
       <ListItem>
-        <ListItemText primary={label} style={{ fontSize: 20 }} />
+        <ListItemText primary={label} style={{ fontSize: 40 }} />
         <TextField
           type="number"
           value={item.value}
@@ -94,7 +98,7 @@ function ScenarioItem({ item, id_score, handleItemValueChaned }) {
       </ListItem>
       :
       <ListItem button onClick={() => handleItemValueChaned(item.key, (item.value === 1) ? 0 : 1)}>
-        <ListItemText primary={label} style={{ fontSize: 20 }} />
+        <ListItemText primary={label} style={{ fontSize: 40 }} />
         <ListItemSecondaryAction>
           <Checkbox
             edge="end"
