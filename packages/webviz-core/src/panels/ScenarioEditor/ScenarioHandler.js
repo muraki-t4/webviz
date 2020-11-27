@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import List from '@material-ui/core/List';
+import Timeline from '@material-ui/lab/Timeline';
 import CSVReader from 'react-csv-reader';
 import Typography from '@material-ui/core/Typography';
 import Scenario from "./Scenario";
@@ -60,7 +60,7 @@ function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, cl
 
   return (
     scenarios.length > 0 ?
-      <List style={{ overflow: 'auto' }}>
+      <Timeline align="left" style={{ alignItems: "flex-start" }}>
         {scenarios.map((scenario, index) =>
           <Scenario
             key={index}
@@ -70,7 +70,7 @@ function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, cl
             updateScenarios={updateScenarios}
           />
         )}
-      </List>
+      </Timeline>
       :
       <div>
         <Typography variant="subtitle1">scenario.csv</Typography>
