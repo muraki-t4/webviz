@@ -83,7 +83,7 @@ function ScenarioItem({ item, id_score, handleItemValueChaned }) {
     { "contents": "start_id", "message": "シナリオ始点" },
     { "contents": "end_id", "message": "シナリオ終点" },
     { "contents": "speed_limit", "message": "上限速度" },
-  ].filter(elem => elem.contents === item.key)[0].message || "該当なし";
+  ].filter(elem => elem.contents === item.key)[0].content_labels || "該当なし";
 
   return (
     ["start_id", "end_id", "speed_limit"].includes(item.key) ?
