@@ -49,7 +49,7 @@ function Scenario({ index, scenario, id_score, updateScenarios }) {
 
   return (
     <>
-      <TimelineItem button onClick={() => setOpen(prevOpen => !prevOpen)}>
+      <TimelineItem onClick={() => setOpen(prevOpen => !prevOpen)}>
         <TimelineSeparator>
           <TimelineDot />
           <TimelineConnector />

@@ -7,7 +7,7 @@ function IDScoreHandler({ id_score, setIdScore }) {
   return (
     id_score.length === 0 &&
     <>
-      <Typography variant="subtitle1">id_score.csv</Typography>
+      <Typography variant="h6">id_score.csv</Typography>
       <CSVReader
         onFileLoaded={(data) => setIdScore(data)}
         parserOptions={{

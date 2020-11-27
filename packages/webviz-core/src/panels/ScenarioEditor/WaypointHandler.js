@@ -71,7 +71,7 @@ function WaypointHandler({ ros, waypoints, setWaypoints }) {
   return (
     waypoints.length === 0 &&
     <>
-      <Typography variant="subtitle1">waypoint.csv</Typography>
+      <Typography variant="h6">waypoint.csv</Typography>
       <CSVReader
         onFileLoaded={(data) => setWaypoints(data)}
         parserOptions={{

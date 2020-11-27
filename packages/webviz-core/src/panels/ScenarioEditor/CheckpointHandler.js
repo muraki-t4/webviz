@@ -168,7 +168,7 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
   return (
     checkpoints.length === 0 &&
     <>
-      <Typography variant="subtitle1">checkpoint.csv</Typography>
+      <Typography variant="h6">checkpoint.csv</Typography>
       <CSVReader
         onFileLoaded={(data) => setCheckpoints(data)}
         parserOptions={{
