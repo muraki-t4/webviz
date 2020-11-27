@@ -16,6 +16,10 @@ import TimelineConnector from '@material-ui/lab/TimelineConnector';
 import TimelineContent from '@material-ui/lab/TimelineContent';
 import TimelineDot from '@material-ui/lab/TimelineDot';
 import { makeStyles, withStyles } from "@material-ui/core/styles";
+import Paper from '@material-ui/core/Paper';
+import Draggable from 'react-draggable';
+import DeleteIcon from '@material-ui/icons/Delete';
+import SaveIcon from '@material-ui/icons/Save';
 
 const TimelineItem = withStyles({
   missingOppositeContent: {
@@ -24,6 +28,14 @@ const TimelineItem = withStyles({
     }
   }
 })(MuiTimelineItem);
+
+function PaperComponent(props) {
+  return (
+    <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
+      <Paper {...props} />
+    </Draggable>
+  );
+}
 
 const useStyles = makeStyles((theme) => ({
   listItemText: {
@@ -73,8 +85,13 @@ function ScenarioDialog({ index, scenario, id_score, open, handleClose, updateSc
       scroll={'paper'}
       fullWidth={true}
       maxWidth={'sm'}
+      PaperComponent={PaperComponent}
+      hideBackdrop={true}
+      aria-labelledby="draggable-dialog-title"
     >
-      <DialogTitle>シナリオ修正</DialogTitle>
+      <DialogTitle style={{ cursor: 'move' }} id="draggable-dialog-title">
+        シナリオ修正
+      </DialogTitle>
       <DialogContent dividers={true}>
         <List dense={true}>
           {Object.keys(scenario).map(key =>
@@ -88,10 +105,22 @@ function ScenarioDialog({ index, scenario, id_score, open, handleClose, updateSc
         </List>
       </DialogContent>
       <DialogActions>
-        <Button onClick={deleteScenario} color="primary">
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          startIcon={<DeleteIcon />}
+          onClick={deleteScenario}
+        >
           削除
         </Button>
-        <Button onClick={handleClose} color="primary">
+        <Button
+          onClick={handleClose}
+          variant="contained"
+          color="primary"
+          size="large"
+          startIcon={<SaveIcon />}
+        >
           更新
         </Button>
       </DialogActions>
@@ -118,6 +147,7 @@ function ScenarioItem({ item, id_score, handleItemValueChaned }) {
           type="number"
           value={item.value}
           style={{ paddingLeft: 20 }}
+          disabled={["start_id", "end_id"].includes(item.key)}
           onChange={e => handleItemValueChaned(item.key, parseInt(e.target.value))}
         />
       </ListItem>
