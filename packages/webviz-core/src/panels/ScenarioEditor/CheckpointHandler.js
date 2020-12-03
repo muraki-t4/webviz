@@ -155,6 +155,10 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
   }, [checkpoints]);
 
   useEffect(() => {
+    if (waypoints.length > 0) addCheckpoint(0);
+  }, [waypoints]);
+
+  useEffect(() => {
     publisher.current = new ROSLIB.Topic({
       ros: ros,
       name: '/scenario_editor/checkpoints',
