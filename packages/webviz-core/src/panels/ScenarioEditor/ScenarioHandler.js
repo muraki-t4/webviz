@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import List from '@material-ui/core/List';
+import Timeline from '@material-ui/lab/Timeline';
 import CSVReader from 'react-csv-reader';
 import Typography from '@material-ui/core/Typography';
 import Scenario from "./Scenario";
@@ -36,7 +36,9 @@ function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, cl
       // delete checkpoint
       setCheckpoints(prevCheckpoints => prevCheckpoints.filter((checkpoint) => checkpoint.id !== deletedCheckpointId));
       // delete scenario and reorder
-      prevScenarios[index + 1].start_id = prevScenarios[index].start_id;
+      if (prevScenarios.length > index + 1) {
+        prevScenarios[index + 1].start_id = prevScenarios[index].start_id;
+      }
       prevScenarios = prevScenarios.filter((_, i) => i !== index);
     } else {
       // update scenario
@@ -60,7 +62,7 @@ function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, cl
 
   return (
     scenarios.length > 0 ?
-      <List style={{ overflow: 'auto' }}>
+      <Timeline align="left" style={{ alignItems: "flex-start" }}>
         {scenarios.map((scenario, index) =>
           <Scenario
             key={index}
@@ -70,10 +72,10 @@ function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, cl
             updateScenarios={updateScenarios}
           />
         )}
-      </List>
+      </Timeline>
       :
       <div>
-        <Typography variant="subtitle1">scenario.csv</Typography>
+        <Typography variant="h6">scenario.csv</Typography>
         <CSVReader
           onFileLoaded={(data) => setScenarios(data)}
           parserOptions={{

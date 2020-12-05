@@ -40,7 +40,7 @@ function ScenarioEditor() {
   const [id_score, setIdScore] = useState([]);
 
   return (
-    <Flex col style={{ height: "100%" }}>
+    <Flex col style={{ height: "100%", overflow: 'scroll' }}>
       <PanelToolbar helpContent={helpContent} floating />
       <Box m={2}>
         <Typography variant="h5"> シナリオエディタ </Typography>
@@ -60,19 +60,19 @@ function ScenarioEditor() {
           waypoints={waypoints}
           setWaypoints={setWaypoints}
         />
-        <ScenarioHandler
-          scenarios={scenarios}
-          setScenarios={setScenarios}
-          setCheckpoints={setCheckpoints}
-          id_score={id_score}
-          clickedWaypointId={globalVariables.clickedWaypointId}
-        />
         <CheckpointHandler
           checkpoints={checkpoints}
           setCheckpoints={setCheckpoints}
           waypoints={waypoints}
           clickedWaypointId={globalVariables.clickedWaypointId}
           ros={ros}
+        />
+        <ScenarioHandler
+          scenarios={scenarios}
+          setScenarios={setScenarios}
+          setCheckpoints={setCheckpoints}
+          id_score={id_score}
+          clickedWaypointId={globalVariables.clickedWaypointId}
         />
       </Box>
     </Flex>

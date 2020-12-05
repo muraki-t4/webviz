@@ -20,6 +20,42 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
   }
 
   const publishMarkers = () => {
+    const deleteMarker = {
+      header: {
+        seq: 0,
+        frame_id: "map"
+      },
+      ns: "marker",
+      type: 2,
+      action: 3,
+      pose: {
+        position: {
+          x: 0,
+          y: 0,
+          z: 0,
+        },
+        orientation: {
+          x: 0,
+          y: 0,
+          z: 0,
+          w: 0,
+        }
+      },
+      scale: {
+        x: 0,
+        y: 0,
+        z: 0,
+      },
+      color: {
+        a: 0.0,
+        r: 0.0,
+        g: 0.0,
+        b: 0.0,
+      },
+      frame_locked: true,
+      points: [],
+      colors: [],
+    }
     const markers = checkpoints.map((checkpoint, index) => (
       {
         header: {
@@ -105,7 +141,7 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
       }
     ));
     const message = new ROSLIB.Message({
-      markers: [...markers, ...labels]
+      markers: [deleteMarker, ...markers, ...labels]
     });
     if (publisher.current !== null) publisher.current.publish(message);
   }
@@ -117,6 +153,10 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
   useEffect(() => {
     publishMarkers();
   }, [checkpoints]);
+
+  useEffect(() => {
+    if (waypoints.length > 0) addCheckpoint(0);
+  }, [waypoints]);
 
   useEffect(() => {
     publisher.current = new ROSLIB.Topic({
@@ -132,7 +172,7 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
   return (
     checkpoints.length === 0 &&
     <>
-      <Typography variant="subtitle1">checkpoint.csv</Typography>
+      <Typography variant="h6">checkpoint.csv</Typography>
       <CSVReader
         onFileLoaded={(data) => setCheckpoints(data)}
         parserOptions={{

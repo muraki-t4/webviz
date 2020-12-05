@@ -69,6 +69,7 @@ __screenshots__/
 dist/
 lib/
 __static_webviz__/
+.s3
 
 # reg-suit generated files
 .reg/
