@@ -7,6 +7,7 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
   const publisher = useRef(null);
 
   const addCheckpoint = (waypointId) => {
+    console.log(waypoints, waypointId, checkpoints)
     if (checkpoints.filter(checkpoint => checkpoint.id === waypointId).length > 0) return;
     const waypoint = waypoints[waypointId] || null;
     if (waypoint) {
@@ -15,7 +16,8 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
         x: waypoint.x,
         y: waypoint.y,
       };
-      setCheckpoints([...checkpoints, checkpoint]);
+      const sortedCheckpoints = [...checkpoints, checkpoint].slice().sort((a, b) => a.id - b.id);
+      setCheckpoints(sortedCheckpoints);
     }
   }
 
@@ -153,10 +155,6 @@ function CheckpointHandler({ checkpoints, setCheckpoints, waypoints, clickedWayp
   useEffect(() => {
     publishMarkers();
   }, [checkpoints]);
-
-  useEffect(() => {
-    if (waypoints.length > 0) addCheckpoint(0);
-  }, [waypoints]);
 
   useEffect(() => {
     publisher.current = new ROSLIB.Topic({

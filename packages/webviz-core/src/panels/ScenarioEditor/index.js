@@ -60,19 +60,19 @@ function ScenarioEditor() {
           waypoints={waypoints}
           setWaypoints={setWaypoints}
         />
+        <ScenarioHandler
+          scenarios={scenarios}
+          setScenarios={setScenarios}
+          checkpoints={checkpoints}
+          setCheckpoints={setCheckpoints}
+          id_score={id_score}
+        />
         <CheckpointHandler
           checkpoints={checkpoints}
           setCheckpoints={setCheckpoints}
           waypoints={waypoints}
           clickedWaypointId={globalVariables.clickedWaypointId}
           ros={ros}
-        />
-        <ScenarioHandler
-          scenarios={scenarios}
-          setScenarios={setScenarios}
-          setCheckpoints={setCheckpoints}
-          id_score={id_score}
-          clickedWaypointId={globalVariables.clickedWaypointId}
         />
       </Box>
     </Flex>

@@ -74,9 +74,14 @@ function ScenarioDialog({ index, scenario, id_score, open, handleClose, updateSc
     updateScenarios(index, { ...scenario, [key]: value })
   }
 
-  const deleteScenario = () => {
-    updateScenarios(index, null);
+  const deletePrevScenario = () => {
+    updateScenarios(index, null, false);
   }
+
+  const deleteBackScenario = () => {
+    updateScenarios(index, null, true);
+  }
+
 
   return (
     <Dialog
@@ -110,9 +115,18 @@ function ScenarioDialog({ index, scenario, id_score, open, handleClose, updateSc
           color="secondary"
           size="large"
           startIcon={<DeleteIcon />}
-          onClick={deleteScenario}
+          onClick={deletePrevScenario}
         >
-          削除
+          始点を削除
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          startIcon={<DeleteIcon />}
+          onClick={deleteBackScenario}
+        >
+          終点を削除
         </Button>
         <Button
           onClick={handleClose}

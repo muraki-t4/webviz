@@ -4,47 +4,30 @@ import CSVReader from 'react-csv-reader';
 import Typography from '@material-ui/core/Typography';
 import Scenario from "./Scenario";
 
-function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, clickedWaypointId }) {
+function ScenarioHandler({ scenarios, setScenarios, checkpoints, setCheckpoints, id_score }) {
 
   const defaultScenario = useRef({});
 
-  const addNewScenario = (waypointId) => {
-
-    let newScenario = { ...defaultScenario.current, ...scenarios[scenarios.length - 1] };
-    newScenario.start_id = newScenario.end_id || 0;
-    newScenario.end_id = waypointId;
-
-    for (const scenario of scenarios) {
-      if (scenario.end_id === waypointId) return false;
-      if (scenario.end_id > waypointId && waypointId > scenario.start_id) {
-        newScenario = { ...scenario };
-        newScenario.end_id = waypointId;
-        scenario.start_id = waypointId;
-        break;
-      }
-    }
-    if (newScenario.hasOwnProperty("start_id") && newScenario.hasOwnProperty("end_id")) {
-      const sortedScenarios = [...scenarios, newScenario].slice().sort((a, b) => (a.start_id > b.start_id) ? 1 : (b.start_id > a.start_id) ? -1 : 0);
-      setScenarios(sortedScenarios);
-    }
+  const reconstructorScenarios = (newCheckpoints) => {
+    if (2 > newCheckpoints.length) return;
+    const newScenarios = newCheckpoints.slice(0, -1).map((checkpoint, index) => ({
+      ...(scenarios.find(scenario => scenario.start_id === checkpoint.id) || defaultScenario.current),
+      start_id: checkpoint.id,
+      end_id: newCheckpoints[index + 1].id,
+    }));
+    setScenarios(newScenarios);
   }
 
-  const updateScenarios = (index, scenario) => {
-    let prevScenarios = scenarios.slice();
+  const updateScenarios = (index, scenario, backward = true) => {
+    let newScenarios = scenarios.slice();
     if (scenario === null) {
-      const deletedCheckpointId = scenarios[index].end_id;
-      // delete checkpoint
-      setCheckpoints(prevCheckpoints => prevCheckpoints.filter((checkpoint) => checkpoint.id !== deletedCheckpointId));
-      // delete scenario and reorder
-      if (prevScenarios.length > index + 1) {
-        prevScenarios[index + 1].start_id = prevScenarios[index].start_id;
-      }
-      prevScenarios = prevScenarios.filter((_, i) => i !== index);
+      const deleteCheckpointId = (backward) ? newScenarios[index].end_id : newScenarios[index].start_id;
+      const newCheckpoints = checkpoints.filter(checkpoint => checkpoint.id !== deleteCheckpointId);
+      setCheckpoints(newCheckpoints);
     } else {
-      // update scenario
-      prevScenarios[index] = scenario;
+      newScenarios[index] = scenario;
+      setScenarios(newScenarios);
     }
-    setScenarios(prevScenarios);
   }
 
   useEffect(() => {
@@ -56,9 +39,8 @@ function ScenarioHandler({ scenarios, setScenarios, setCheckpoints, id_score, cl
   }, [id_score])
 
   useEffect(() => {
-    // add new scenario
-    if (clickedWaypointId && id_score.length > 0) addNewScenario(clickedWaypointId);
-  }, [clickedWaypointId])
+    reconstructorScenarios(checkpoints);
+  }, [checkpoints]);
 
   return (
     scenarios.length > 0 ?
