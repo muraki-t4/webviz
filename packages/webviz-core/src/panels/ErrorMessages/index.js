@@ -7,9 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
-import styled from "styled-components";
 import ROSLIB from 'roslib';
 
 import helpContent from "./index.help.md";
