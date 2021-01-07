@@ -7,9 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
-import styled from "styled-components";
 import ROSLIB from 'roslib';
 
 import helpContent from "./index.help.md";
@@ -39,6 +38,7 @@ function ErrorMessages({ config }: Props) {
   const rosbridgeWebsocketUrl = params.get("rosbridge-websocket-url");
   const errorLogUrl = params.get("error-log-url");
   const offset = params.get("offset") || 3;
+  const duration = params.get("duration") || 5;
 
   const ros = new ROSLIB.Ros({ url: rosbridgeWebsocketUrl });
 
@@ -48,15 +48,32 @@ function ErrorMessages({ config }: Props) {
     serviceType: 'controllable_rosbag_player/Seek',
   });
 
-  const callSeekService = (timestampNS) => {
+  const pauseService = new ROSLIB.Service({
+    ros: ros,
+    name: '/rosbag_player_controller/pause',
+    serviceType: 'std_srv/Trigger',
+  });
+
+  const eventPublisher = new ROSLIB.Topic({
+    ros: ros,
+    name: '/playback',
+    messageType: 'std_msgs/String',
+  });
+
+  const callSeekService = (timestampNS, errorId) => {
     try {
       const ts = toSecFromNS(timestampNS) - startTime - offset;
-      const request = new ROSLIB.ServiceRequest({
-        time: ts,
-      });
-      seekService.callService(request, result => {
-        console.log(result);
-      });
+      seekService.callService(
+        new ROSLIB.ServiceRequest({ time: ts, }),
+        result => { console.log(result); }
+      );
+      setTimeout(() => {
+        pauseService.callService(
+          new ROSLIB.ServiceRequest({}),
+          result => { console.log(result) }
+        );
+        eventPublisher.publish(new ROSLIB.Message({ data: errorId }));
+      }, duration * 1000);
     } catch (error) {
       console.error(error);
     }
@@ -109,7 +126,7 @@ function ErrorMessages({ config }: Props) {
               fontSize: 14,
             }}
             key={item.error_id}
-            onClick={() => callSeekService(item.timestamp)}
+            onClick={() => callSeekService(item.timestamp, item.error_id)}
           >
             <p>
               <span style={{ color: "orange", marginRight: 8 }}>{item.scenario_start_id}</span>
