@@ -102,7 +102,7 @@ export default class BagDataProvider implements DataProvider {
         fileReader,
         cacheSizeInBytes: cacheSizeInBytes || 1024 * 1024 * 200, // 200MiB
         logFn: (message) => {
-          log.info(`CachedFilelike: ${message}`);
+          // log.info(`CachedFilelike: ${message}`);
         },
         keepReconnectingCallback: (reconnecting: boolean) => {
           extensionPoint.reportMetadataCallback({
