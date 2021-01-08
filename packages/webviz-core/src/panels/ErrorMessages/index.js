@@ -7,84 +7,53 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { hot } from "react-hot-loader/root";
-import ROSLIB from 'roslib';
 
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import LogList from "webviz-core/src/components/LogList";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
+import { fromNanoSec } from "webviz-core/src/util/time";
 
 type Config = { errorMessages: Object };
 type Props = { config: Config };
 
-const toSec = ({ secs, nsecs }) => {
-  return secs + nsecs * 1e-9;
-}
-
-const toSecFromNS = (ns) => {
-  return parseInt(ns) * 1e-9;
-}
-
 function ErrorMessages({ config }: Props) {
+
+  const params = new URLSearchParams(window.location.search);
+  const errorLogUrl = params.get("error-log-url");
+  const offset = params.get("offset") || 3;
+  const duration = params.get("duration") || 6;
 
   const [errorLogs, setErrorLogs] = useState([]);
   const [error, setError] = useState(null);
-  const [startTime, setStartTime] = useState(0);
+  const { startPlayback, seekPlayback, pausePlayback } = useMessagePipeline(
+    useCallback(({ startPlayback, seekPlayback, pausePlayback }) => ({ startPlayback, seekPlayback, pausePlayback }), [])
+  );
 
-  const params = new URLSearchParams(window.location.search);
-  const rosbridgeWebsocketUrl = params.get("rosbridge-websocket-url");
-  const errorLogUrl = params.get("error-log-url");
-  const offset = params.get("offset") || 3;
-  const duration = params.get("duration") || 5;
-
-  const ros = new ROSLIB.Ros({ url: rosbridgeWebsocketUrl });
-
-  const seekService = new ROSLIB.Service({
-    ros: ros,
-    name: '/rosbag_player_controller/seek_and_play',
-    serviceType: 'controllable_rosbag_player/Seek',
-  });
-
-  const pauseService = new ROSLIB.Service({
-    ros: ros,
-    name: '/rosbag_player_controller/pause',
-    serviceType: 'std_srv/Trigger',
-  });
-
-  const eventPublisher = new ROSLIB.Topic({
-    ros: ros,
-    name: '/playback',
-    messageType: 'std_msgs/String',
-  });
-
-  const callSeekService = (timestampNS, errorId) => {
+  // seek to the time of occuring error and play
+  const seekPlaybackError = ({ timestamp, error_id }) => {
     try {
-      const ts = toSecFromNS(timestampNS) - startTime - offset;
-      seekService.callService(
-        new ROSLIB.ServiceRequest({ time: ts, }),
-        result => { console.log(result); }
-      );
+      const ts = fromNanoSec(parseInt(timestamp) - offset);
+      seekPlayback(ts);
+      startPlayback();
       setTimeout(() => {
-        pauseService.callService(
-          new ROSLIB.ServiceRequest({}),
-          result => { console.log(result) }
-        );
-        eventPublisher.publish(new ROSLIB.Message({ data: errorId }));
+        pausePlayback();
+        // post message to parent window
+        if (window.parent) window.parent.postMessage(error_id, "*");
       }, duration * 1000);
     } catch (error) {
-      console.error(error);
+      alert("再生に失敗しました");
     }
   }
 
-  const getErrorLog = () => {
+  const getErrorLog = async () => {
     try {
-      fetch(errorLogUrl)
-        .then(res => res.json())
-        .then(json => setErrorLogs(json))
-        .catch(error => setError(error));
+      const res = await fetch(errorLogUrl);
+      setErrorLogs(res.json());
     } catch (error) {
       setError(error);
     }
@@ -96,25 +65,15 @@ function ErrorMessages({ config }: Props) {
 
   useEffect(() => {
     getErrorLog();
-    const playerEventListener = new ROSLIB.Topic({
-      ros: ros,
-      name: '/rosbag_player_controller/rosbag_start_time',
-      messageType: 'rosgraph_msgs/Clock',
-    });
-    playerEventListener.subscribe(({ clock }) => {
-      setStartTime(toSec(clock));
-    });
-    return () => playerEventListener.unsubscribe();
   }, []);
 
   return (
-    <Flex col style={{ height: "100%" }}>
+    <Flex col style={{ height: "100%", overflow: 'scroll' }}>
       <PanelToolbar helpContent={helpContent} floating />
       <div style={{ padding: 10, fontSize: 16 }}>
-        <span>検定結果一覧</span>
+        <span>検定結果</span>
       </div>
       <LogList
-        style={{ overflow: 'scroll', paddingBottom: 20 }}
         items={errorLogs.sort(sortByTimestamp)}
         renderRow={({ item, style }) => (
           <div
@@ -126,7 +85,7 @@ function ErrorMessages({ config }: Props) {
               fontSize: 14,
             }}
             key={item.error_id}
-            onClick={() => callSeekService(item.timestamp, item.error_id)}
+            onClick={() => seekPlaybackError(item)}
           >
             <p>
               <span style={{ color: "orange", marginRight: 8 }}>{item.scenario_start_id}</span>
