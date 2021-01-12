@@ -54,12 +54,6 @@ function ErrorMessages({ config }: Props) {
     serviceType: 'std_srv/Trigger',
   });
 
-  const eventPublisher = new ROSLIB.Topic({
-    ros: ros,
-    name: '/playback',
-    messageType: 'std_msgs/String',
-  });
-
   const callSeekService = (timestampNS, errorId) => {
     try {
       const ts = toSecFromNS(timestampNS) - startTime - offset;
@@ -72,7 +66,8 @@ function ErrorMessages({ config }: Props) {
           new ROSLIB.ServiceRequest({}),
           result => { console.log(result) }
         );
-        eventPublisher.publish(new ROSLIB.Message({ data: errorId }));
+        // post message to parent window
+        if (window.parent) window.parent.postMessage(error_id, "*");
       }, duration * 1000);
     } catch (error) {
       console.error(error);
