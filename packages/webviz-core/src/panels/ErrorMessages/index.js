@@ -28,20 +28,38 @@ function ErrorMessages({ config }: Props) {
   const offset = params.get("offset") || 3;
   const duration = params.get("duration") || 6;
 
-  const [errorLogs, setErrorLogs] = useState([]);
-  const [error, setError] = useState(null);
-  const { startPlayback, seekPlayback, pausePlayback } = useMessagePipeline(
-    useCallback(({ startPlayback, seekPlayback, pausePlayback }) => ({ startPlayback, seekPlayback, pausePlayback }), [])
-  );
+  const ros = new ROSLIB.Ros({ url: rosbridgeWebsocketUrl });
 
-  // seek to the time of occuring error and play
-  const seekPlaybackError = ({ timestamp, error_id }) => {
+  const playService = new ROSLIB.Service({
+    ros: ros,
+    name: '/rosbag_player_controller/play',
+    serviceType: 'std_srv/Trigger',
+  })
+
+  const seekService = new ROSLIB.Service({
+    ros: ros,
+    name: '/rosbag_player_controller/seek_and_play',
+    serviceType: 'controllable_rosbag_player/Seek',
+  });
+
+  const pauseService = new ROSLIB.Service({
+    ros: ros,
+    name: '/rosbag_player_controller/pause',
+    serviceType: 'std_srv/Trigger',
+  });
+
+  const callSeekService = ({ timestamp, error_id }) => {
     try {
-      const ts = fromNanoSec(parseInt(timestamp) - offset);
-      seekPlayback(ts);
-      startPlayback();
+      const ts = toSecFromNS(timestamp) - startTime - offset;
+      seekService.callService(
+        new ROSLIB.ServiceRequest({ time: ts, }),
+        result => console.log(result)
+      );
       setTimeout(() => {
-        pausePlayback();
+        pauseService.callService(
+          new ROSLIB.ServiceRequest({}),
+          result => console.log(result)
+        );
         // post message to parent window
         if (window.parent) window.parent.postMessage(error_id, "*");
       }, duration * 1000);
@@ -65,6 +83,19 @@ function ErrorMessages({ config }: Props) {
 
   useEffect(() => {
     getErrorLog();
+    const playerEventListener = new ROSLIB.Topic({
+      ros: ros,
+      name: '/rosbag_player_controller/rosbag_start_time',
+      messageType: 'rosgraph_msgs/Clock',
+    });
+    playerEventListener.subscribe(({ clock }) => {
+      setStartTime(toSec(clock));
+      playService.callService(
+        new roslib.ServiceRequest({}),
+        result => console.log(result)
+      )
+    });
+    return () => playerEventListener.unsubscribe();
   }, []);
 
   return (
@@ -85,7 +116,7 @@ function ErrorMessages({ config }: Props) {
               fontSize: 14,
             }}
             key={item.error_id}
-            onClick={() => seekPlaybackError(item)}
+            onClick={() => callSeekService(item)}
           >
             <p>
               <span style={{ color: "orange", marginRight: 8 }}>{item.scenario_start_id}</span>
