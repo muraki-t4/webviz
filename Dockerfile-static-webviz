@@ -14,7 +14,7 @@ FROM node:10.16-slim
 # RUN apt-get update && apt-get install -yq gnupg libgconf-2-4 wget git ssh --no-install-recommends
 
 # Install dumb-init which helps with proper signal handling.
-RUN apt-get install -y dumb-init
+RUN apt-get update && apt-get install -y dumb-init
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
 # Copy in the files
