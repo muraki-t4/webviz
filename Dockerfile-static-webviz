@@ -11,10 +11,10 @@ FROM node:10.16-slim
 
 # Install some general dependencies for stuff below and for CircleCI;
 # https://circleci.com/docs/2.0/custom-images/#required-tools-for-primary-containers
-RUN apt-get update && apt-get install -yq gnupg libgconf-2-4 wget git ssh --no-install-recommends
+# RUN apt-get update && apt-get install -yq gnupg libgconf-2-4 wget git ssh --no-install-recommends
 
 # Install dumb-init which helps with proper signal handling.
-RUN apt-get install -y dumb-init
+RUN apt-get update && apt-get install -y dumb-init
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
 # Copy in the files

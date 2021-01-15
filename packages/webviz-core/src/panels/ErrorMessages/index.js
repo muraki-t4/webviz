@@ -7,9 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
-import styled from "styled-components";
 import ROSLIB from 'roslib';
 
 import helpContent from "./index.help.md";
@@ -39,8 +38,15 @@ function ErrorMessages({ config }: Props) {
   const rosbridgeWebsocketUrl = params.get("rosbridge-websocket-url");
   const errorLogUrl = params.get("error-log-url");
   const offset = params.get("offset") || 3;
+  const duration = params.get("duration") || 6;
 
   const ros = new ROSLIB.Ros({ url: rosbridgeWebsocketUrl });
+
+  const playService = new ROSLIB.Service({
+    ros: ros,
+    name: '/rosbag_player_controller/play',
+    serviceType: 'std_srv/Trigger',
+  })
 
   const seekService = new ROSLIB.Service({
     ros: ros,
@@ -48,15 +54,27 @@ function ErrorMessages({ config }: Props) {
     serviceType: 'controllable_rosbag_player/Seek',
   });
 
-  const callSeekService = (timestampNS) => {
+  const pauseService = new ROSLIB.Service({
+    ros: ros,
+    name: '/rosbag_player_controller/pause',
+    serviceType: 'std_srv/Trigger',
+  });
+
+  const callSeekService = ({ timestamp, error_id }) => {
     try {
-      const ts = toSecFromNS(timestampNS) - startTime - offset;
-      const request = new ROSLIB.ServiceRequest({
-        time: ts,
-      });
-      seekService.callService(request, result => {
-        console.log(result);
-      });
+      const ts = toSecFromNS(timestamp) - startTime - offset;
+      seekService.callService(
+        new ROSLIB.ServiceRequest({ time: ts, }),
+        result => console.log(result)
+      );
+      setTimeout(() => {
+        pauseService.callService(
+          new ROSLIB.ServiceRequest({}),
+          result => console.log(result)
+        );
+        // post message to parent window
+        if (window.parent) window.parent.postMessage(error_id, "*");
+      }, duration * 1000);
     } catch (error) {
       console.error(error);
     }
@@ -86,6 +104,10 @@ function ErrorMessages({ config }: Props) {
     });
     playerEventListener.subscribe(({ clock }) => {
       setStartTime(toSec(clock));
+      playService.callService(
+        new ROSLIB.ServiceRequest({}),
+        result => console.log(result)
+      )
     });
     return () => playerEventListener.unsubscribe();
   }, []);
@@ -109,7 +131,7 @@ function ErrorMessages({ config }: Props) {
               fontSize: 14,
             }}
             key={item.error_id}
-            onClick={() => callSeekService(item.timestamp)}
+            onClick={() => callSeekService(item)}
           >
             <p>
               <span style={{ color: "orange", marginRight: 8 }}>{item.scenario_start_id}</span>
