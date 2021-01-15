@@ -7,23 +7,35 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
+import ROSLIB from 'roslib';
 
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import LogList from "webviz-core/src/components/LogList";
-import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
-import { fromNanoSec } from "webviz-core/src/util/time";
 
 type Config = { errorMessages: Object };
 type Props = { config: Config };
 
+const toSec = ({ secs, nsecs }) => {
+  return secs + nsecs * 1e-9;
+}
+
+const toSecFromNS = (ns) => {
+  return parseInt(ns) * 1e-9;
+}
+
 function ErrorMessages({ config }: Props) {
 
+  const [errorLogs, setErrorLogs] = useState([]);
+  const [error, setError] = useState(null);
+  const [startTime, setStartTime] = useState(0);
+
   const params = new URLSearchParams(window.location.search);
+  const rosbridgeWebsocketUrl = params.get("rosbridge-websocket-url");
   const errorLogUrl = params.get("error-log-url");
   const offset = params.get("offset") || 3;
   const duration = params.get("duration") || 6;
@@ -64,14 +76,16 @@ function ErrorMessages({ config }: Props) {
         if (window.parent) window.parent.postMessage(error_id, "*");
       }, duration * 1000);
     } catch (error) {
-      alert("再生に失敗しました");
+      console.error(error);
     }
   }
 
-  const getErrorLog = async () => {
+  const getErrorLog = () => {
     try {
-      const res = await fetch(errorLogUrl);
-      setErrorLogs(res.json());
+      fetch(errorLogUrl)
+        .then(res => res.json())
+        .then(json => setErrorLogs(json))
+        .catch(error => setError(error));
     } catch (error) {
       setError(error);
     }
@@ -91,7 +105,7 @@ function ErrorMessages({ config }: Props) {
     playerEventListener.subscribe(({ clock }) => {
       setStartTime(toSec(clock));
       playService.callService(
-        new roslib.ServiceRequest({}),
+        new ROSLIB.ServiceRequest({}),
         result => console.log(result)
       )
     });
@@ -99,12 +113,13 @@ function ErrorMessages({ config }: Props) {
   }, []);
 
   return (
-    <Flex col style={{ height: "100%", overflow: 'scroll' }}>
+    <Flex col style={{ height: "100%" }}>
       <PanelToolbar helpContent={helpContent} floating />
       <div style={{ padding: 10, fontSize: 16 }}>
-        <span>検定結果</span>
+        <span>検定結果一覧</span>
       </div>
       <LogList
+        style={{ overflow: 'scroll', paddingBottom: 20 }}
         items={errorLogs.sort(sortByTimestamp)}
         renderRow={({ item, style }) => (
           <div
